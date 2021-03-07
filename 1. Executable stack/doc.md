@@ -43,6 +43,12 @@ Dokumentacja `strlen()` mówi, że funkcja sprawdza dlugość do otrzymania `x00
 
 Używając pythona i pakietu pwntools postaram się wykorzystać ten błąd.
 
+Schemat exploitacji jest następujący:
+
+* ustalić miejsce w pamięci, w którym nadpisujemy adres powrotu
+* ustalić miejsce w pamięci, w którym znajduje się bufor
+* nadpisać adres powrotu adresem bufora, w którym znajduje się nasz kod.
+
 ```python
 from pwn import *
 
