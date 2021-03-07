@@ -1,6 +1,6 @@
 # Projekt BSO
 
-Tematem realizowanego projektu są techniki obrony przed exploitacją binarną. 
+Tematem realizowanego projektu są technik ochrony aplikacji natywnych oraz technik utrudniających ich ekspoitacje. 
 
 Postaram się omówić plusy i minusy danych technik oraz sposoby ich obejścia.
 

@@ -1,10 +1,22 @@
 # 1.Executable stack
 
-### 1.1
+### 1.1 Opis
 
 `gcc` defaultowo włącza non-executable stack - można go wyłączyć flaga `-z execstack`.
-Tak samo zachowuje się `clang`. Jest to argument przekazywany do linkera. Obecnie niektóre stare binarki linuxowe mogą wymagać wykonywalnego stacku dlatego ta opcja jest włączona. Wykonywalny stack jest pokonywany za pomocą oznaczenia pamięci stacku jako niewykonywalnej. Nie ma tu żadnego spadku wydajności, jedynie ewentualnie problemy z kompatybilnością ze starymi plikami.
 
+Tak samo zachowuje się `clang`. 
+
+Jest to argument przekazywany do linkera. 
+
+
+Obecnie niektóre stare binarki linuxowe mogą wymagać wykonywalnego stacku dlatego ta opcja może zostać włączona. 
+Wykonywalny stack jest pokonywany za pomocą oznaczenia pamięci stacku jako niewykonywalnej. Nie ma tu żadnego spadku wydajności, jedynie ewentualnie problemy z kompatybilnością ze starymi plikami.
+
+Wyłączenie wykonywalnego stosu jest dość podstawową metodą obrony przez eksploitacją binarną aplikacji i następne metody uwzględniają tą metodę jako uwzględnioną.
+
+Oznaczenie pamięci jako niewykonywalna obecnie najcześciej odbywa się za pomocą ustawienia flagi `NX` w tablicy strony.
+
+Implementacje na różnych systemach nie różnia się.
 
 ### 1.2 Proof of concept
 Pierwszym omówionym exploitem i obroną przed nim bedzie wykonywalny stack.
@@ -59,13 +71,24 @@ p.readuntil("What's your name?\n")
 name = "a"*8+"\x00"+"a"*15
 ```
 
-Exploit omija sprawdzenie. Następnie za pomocą gdb ustaliłem, w którym miejscu można nadpisać adres powrotu oraz adres, w którym zaczyna się bufor (Adres został wyjęty z gdb).
+Exploit omija sprawdzenie. 
+
+W debuggerze ustaliłem, że miejsce w pamięci do którego bedziemy pisać każdą następna wiadomość to rejestr `eip` przetrzymujący adres powrotu funkcji.
+
+Następnie za pomocą gdb ustaliłem, w którym miejscu można nadpisać adres powrotu oraz adres, w którym zaczyna się bufor.
+
+Adres ten jest stały, bo nie używamy ani PIE ani ASLR.
+
+Dopisując do naszej wiadomości adres bufora powiększony o offset generowany przez poprzednie wiadomości uda nam się skierować wykonywanie programu na złośliwy kod, który jesteśmy w stanie wstrzyknąć za adresem.
 
 ```python
 name += "\x20\xd2\xff\xff"
 ```
 
+
 W tym momencie wystarczy do stringa name dokleić shellcode wywołujący execve i odpowiednimi parametrami. Shellcode ten zaczerpnałem ze strony `http://shell-storm.org/shellcode/files/shellcode-811.php`.
+
+Jest to shellcode w assemblerze ładujący odpowiednie argumenty do odpowiednich rejestrów i wywołujący funkcje execve syscallem z argumentami wskazującymi na `bin/sh`.
 
 ```python
 name += "\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x89\xc1\x89\xc2\xb0\x0b\xcd\x80\x31\xc0\x40\xcd\x80"
@@ -91,10 +114,10 @@ p.interactive()
 ```
 
 
-Exploit działa na programie skompilowanym z wykonywalnym stackiem.
+Exploit działa na programie skompilowanym z wykonywalnym stackiem. Widzimy tu interaktywny shell.
 
 ![img.png](img.png)
 
-Natomiast skompilowany bez flagi pozwalającej na wykonywanie kodu na stacku nie działa.
+Natomiast skompilowany bez flagi pozwalającej na wykonywanie kodu na stacku nie działa. Program zakończył działanie sygnałem SIGSEGV.
 
 ![img_1.png](img_1.png)
