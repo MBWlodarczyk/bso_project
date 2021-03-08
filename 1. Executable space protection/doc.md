@@ -102,7 +102,7 @@ Wysłałem wiadomość:
 ```python
 name = "a"*8+"\x00"+"a"*15 + '\x00\x00\x00\x00'
 ```
-![img_2.png](img_2.png)
+![img_2.png](img/img_2.png)
 
 Rejestr został nadpisany.
 
@@ -147,11 +147,11 @@ p.interactive()
 
 Exploit działa na programie skompilowanym z wykonywalnym stackiem. Widzimy tu interaktywny shell.
 
-![img.png](img.png)
+![img.png](img/img.png)
 
 Natomiast skompilowany bez flagi pozwalającej na wykonywanie kodu na stacku nie działa. Program zakończył działanie sygnałem SIGSEGV.
 
-![img_1.png](img_1.png)
+![img_1.png](img/img_1.png)
 
 
 ### 1.4 Wnioski

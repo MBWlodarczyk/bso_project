@@ -10,11 +10,11 @@ Można to zobaczyć disassemblując plik kompilowany bez i z PIE.
 
 W przypadku pliku bez PIE adresy są zapisane w kodzie. 
 
-![img_5.png](img_5.png)
+![img_5.png](img/img_5.png)
 
 W przypadku pliku z PIE liczone są offsety.
 
-![img_4.png](img_4.png)
+![img_4.png](img/img_4.png)
 
 Widzimy to w callach.
 
@@ -43,9 +43,9 @@ Ważny aspektem ASLR jest także entropia samego losowania, która powinna być 
 
 Ten sam kod uruchomiony dwa razy ma inna przestrzeń adresową.
 
-![img_6.png](img_6.png)
+![img_6.png](img/img_6.png)
 
-![img_7.png](img_7.png)
+![img_7.png](img/img_7.png)
 
 
 
@@ -53,9 +53,10 @@ Główna róznica pomiedzy implementacją Linuxową i Windowsową jest to, że w
 
 W Linuxie ASLR jest implementowane w kernelu. Na linuxie ASLR ma wpływ na performance przez to, że binarki obsługujące ASLR muszą być kompilowane z PIE (Position Independent Executable), co prowadzi nawet do 25% gorszego performance'u na 32bit x86. 
 
+
 Na Windowsie ASLR jest włączany poprzez linkowanie z opcja `/DYNAMICBASE`. Na windowsie wpływ na performance run-time jest raczej niewielki, ale ASLR może spowolnić ładowanie modułów.
 
-### 1.3 Proof of Concept - sterowanie wykonaniem programu bez randomizacji - atak na ASLR
+### 1.3 Proof of Concept - sterowanie wykonaniem programu bez randomizacji
 
 Exploit nie używa wykonalnego stosu.
 
@@ -111,14 +112,14 @@ name = "AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJKKKKLLLLMMMMNNNNOOOO"
 p.sendline(name)
 ```
 
-![img.png](img.png)
+![img.png](img/img.png)
 
 
 W rejestr `eip` trafiła litera G. Co pozwala mi ustalić miejsce, w które wstrzykne adres funkcji secret().
 
 Adres funkcji `secret()` uzyskam używając gdb.
 
-![img_2.png](img_2.png)
+![img_2.png](img/img_2.png)
 
 Adres ten muszę też przekształcić do little endian.
 
@@ -137,14 +138,28 @@ p.sendline(name)
 
 W tym momencie exploit powinien działać i wywoływać funkcję secret.
 
-![img_1.png](img_1.png)
+![img_1.png](img/img_1.png)
 
 Exploit działa jeśli flaga od ASLR jest ustawiona na 0.
 
 W momencie ustawienia jej na 2 exploit nie działa - adres, który nadpisuję nie jest adresem funkcji `secret`. Program został załadowany pod inny adres.
 
-![img_3.png](img_3.png)
+![img_3.png](img/img_3.png)
 
 Adres, który wywołuje `eip` jest losowym adresem, więc wykonanie konczy się `SIGSEGV`, bo program chciał odnieść się do zabronionej dla niego pamięci.
 
-Warto dodać, że w przypadku wykonania exploitu na programie kompilowanym z PIE, ale z wyłączonym ASLR - exploit działa. Samo PIE bez ASLR jest jedynie sposobem kompilacji.
+Warto dodać, że w przypadku wykonania exploitu na programie kompilowanym z PIE, ale z wyłączonym ASLR - exploit działa. Samo PIE bez ASLR nie chroni przed takim atakiem.
+
+### 1.4 Proof of concept - atak typu ROP
+
+W tym momencie warto byłoby przyjrzeć się atakom typu ROP. 
+
+Ideą takiego ataku jest wykorzystanie fragmentów kodu znajdujących się już w naszej aplikacji. Nie muszą to być fragmenty, które są kodem. Tekst zawierający odpowiednie sekwencje bitów lub kod bibliotek jeżeli są linkowane statycznie jest również możliwy do wykorzystania.
+
+Atakujący za pomocą ROP szuka małych fragmentów assemblera, które kończą się instrukcja `ret`, czyli `c3`. W taki sposób fragment takiego kodu jest wykonywany mimo niewykonywalnego stosu. Kod nie jest wykonywane na stosie. Ze stosu są jedynie pobierane adresy fragmentów kodu - tzw. ROP Gadgetów. 
+
+Naszym zadaniem jest więc załadować do rejestrów odpowiednie wartości i wywołać `execve` za pomocą łańcucha takich Gadgetów nazywanego ROP chain.
+
+### 1.5 Wnioski
+
+PIE i ASLR są technikami bardzo komplementarnymi i używanie ich razem daje największą ochronę. 
