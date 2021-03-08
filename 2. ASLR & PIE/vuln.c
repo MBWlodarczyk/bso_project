@@ -8,6 +8,7 @@
 void secret() {
     system("sh");
 }
+
 void ask_for_name()
 {
     char name[12] = {0};

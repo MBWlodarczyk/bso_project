@@ -39,7 +39,7 @@ Oznaczenie pamięci jako niewykonywalna obecnie najcześciej odbywa się za pomo
 
 Implementacje na różnych systemach nie różnia się zbytnio.
 
-### 1.3 Proof of concept
+### 1.3 Proof of concept - atak na wykonywalny stos
 Pierwszym omówionym exploitem i obroną przed nim bedzie wykonywalny stack.
 
 Kod programu, który bedzie exploitować jest następujący:
@@ -72,7 +72,7 @@ int main()
 
 Błędem jest użyta tu funkcja `gets()` i pozornie działające sprawdzenie długości inputu.
 
-Dokumentacja `strlen()` mówi, że funkcja sprawdza dlugość do otrzymania `x00`. Taki znak możemy dokleić, aby przepełnić bufor.
+Dokumentacja `strlen()` mówi, że funkcja sprawdza dlugość do otrzymania `x00`. Taki znak możemy dokleić na końcu inputu, aby przepełnić bufor.
 
 Używając pythona i pakietu pwntools postaram się wykorzystać ten błąd.
 
@@ -94,9 +94,19 @@ name = "a"*8+"\x00"+"a"*15
 
 Exploit omija sprawdzenie. 
 
-W debuggerze ustaliłem, że miejsce w pamięci do którego bedziemy pisać każdą następna wiadomość to rejestr `eip` przetrzymujący adres powrotu funkcji.
+Podłączając do processu debugger jestem w stanie ustalić jak dużo `a` muszę wysłać, aby nadpisać rejestr `eip`, który odpowiada za powrót z funkcji.
 
-Następnie za pomocą gdb ustaliłem, w którym miejscu można nadpisać adres powrotu oraz adres, w którym zaczyna się bufor.
+w przypadku podania 16 znaków następna nadpisana pamięć wpada w rejestr `eip`.
+
+Wysłałem wiadomość:
+```python
+name = "a"*8+"\x00"+"a"*15 + '\x00\x00\x00\x00'
+```
+![img_2.png](img_2.png)
+
+Rejestr został nadpisany.
+
+Z debuggera wyciagam adres miejsca,w którym nadpisuje dane.
 
 Adres ten jest stały, bo nie używamy ani PIE ani ASLR.
 
@@ -148,5 +158,5 @@ Natomiast skompilowany bez flagi pozwalającej na wykonywanie kodu na stacku nie
 
 Kontrolowanie tego czy dane miejsce w pamięci może wykonywać kod jest ważna i pozwala zapobiegać najprostszym atakom typu buffer overflow. Jednak nie jest to remedium na wszystkie ataki.
 
-Ataki typu ROP lub RET2LIBC, które bedą prezentowane w dalszej częsci projektu mogą być wykonane z `nonexec` stosem.
+Ataki typu ROP lub RET2LIBC, które bedą prezentowane w dalszej częsci projektu mogą być wykonane z `nonexec` stosem. Jest to zabezpieczenie dość proste i konieczne.
 
