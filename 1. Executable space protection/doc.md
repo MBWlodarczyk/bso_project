@@ -6,15 +6,17 @@ Dość ważny aspektem bezpieczeństwa jest rozdzielanie uprawnień obszarom pam
 
 Problem rozwiązywany jest zarówno sprzętowo, jak i w oprogramowaniu.
 
-Ważna jest polityka (W^X) - mówiąca, że dana strona pamięci może być tylko i wyłącznie albo wykonywalna, albo można do niej pisać. Polityka ta została wprowadzona w OpenBSD 3.3 w 2003 roku.
+Ważna jest polityka (W^X) - mówiąca, że dana strona pamięci może być tylko i wyłącznie albo wykonywalna, albo można do niej pisać. Polityka ta została wprowadzona w OpenBSD 3.3 w 2003 roku. Polityka jest dość dobrą obroną przed atakami buffer overflow.
 
-Odpowiedzią Microsoftu było DEP (Data Execution Preventon) wprowadzone w Windows XP zawierające szereg zabezpieczeń.
+Odpowiedzią Microsoftu było DEP (Data Execution Preventon) wprowadzone w Windows XP zawierające szereg zabezpieczeń - między innymi obsługę `NX-bit` oraz póżniej ASLR.
 
 Obecnie sprzętowym sposobem realizacji jest tak zwany `NX-bit` odpowiadający właśnie za wykonywalność pamięci. Z tego właśnie korzystać jądro Linuxa, jeżeli procesor obsługuje tą funkcje.
 
-W innym przypadku możliwa jest również emulacja tej funkcjonalności (przykład Exec Shield i PaX)
+W innym przypadku możliwa jest również emulacja tej funkcjonalności (przykład Exec Shield i PaX). Emulacja jest jednak dość kosztowna.
 
-Na Linuxie do ręcznego ustawienia uprawnień obszaru służy syscall `mprotect()`.
+Na Linuxie do ręcznego ustawienia uprawnień obszaru służy syscall `mprotect()`. Wywoływany z odpowiednimi flagami oraz adresami pamięci.
+
+W współczesnym świecie dobre rodzielanie uprawnień obszarom pamięci jest dość znane i implementowane jako domyślne funkcje w najczęstszych przypadkach. Takim przypadkiem jest niewykonywalność stosu wywołań, który postaram się zeksploitować w następnych punktach.
 
 ### 1.2 Opis
 
@@ -22,17 +24,20 @@ Na Linuxie do ręcznego ustawienia uprawnień obszaru służy syscall `mprotect(
 
 Tak samo zachowuje się `clang`. 
 
-Jest to argument przekazywany do linkera. 
+Jest to argument przekazywany do linkera, który mapuje proces na przestrzeń adresów. Wtedy też przestrzeń przeznaczona na stos jest oznaczana jako `RWX`.
 
 
-Obecnie niektóre stare binarki linuxowe mogą wymagać wykonywalnego stacku dlatego ta opcja może zostać włączona. 
+Obecnie niektóre stare binarki linuxowe mogą wymagać wykonywalnego stosu, dlatego też opcja może zostać włączona. Wykonywalny stos był niegdyś prawie, że dodatkową funkcja.
+
+Jest to związane z tym jak kompilator `gcc` zachowowywał się w przypadku `nested function`. Kompilator wtedy odkłada na stosie tak zwaną trampolinę - czyli kod, który musi być wykonywalny na stosie. Obecne problem rozwiązywany jest bez wykonywalnego stosu za pomocą deskryptorów.
+
 Wykonywalny stack jest pokonywany za pomocą oznaczenia pamięci stacku jako niewykonywalnej. Nie ma tu żadnego spadku wydajności, jedynie ewentualnie problemy z kompatybilnością ze starymi plikami.
 
 Wyłączenie wykonywalnego stosu jest dość podstawową metodą obrony przez eksploitacją binarną aplikacji i następne metody uwzględniają tą metodę jako uwzględnioną.
 
 Oznaczenie pamięci jako niewykonywalna obecnie najcześciej odbywa się za pomocą ustawienia flagi `NX` w tablicy strony.
 
-Implementacje na różnych systemach nie różnia się.
+Implementacje na różnych systemach nie różnia się zbytnio.
 
 ### 1.3 Proof of concept
 Pierwszym omówionym exploitem i obroną przed nim bedzie wykonywalny stack.
