@@ -5,15 +5,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-void secret()
-{
-    system("bin/sh");
-
+void secret() {
+    system("sh");
+}
 void ask_for_name()
 {
     char name[12] = {0};
     puts("What's your name?");
-    scanf("%s",name)
+    scanf("%s",name);
     printf("Hi %s!\n", name);
 }
 

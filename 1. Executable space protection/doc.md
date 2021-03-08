@@ -1,6 +1,22 @@
-# 1.Executable stack
+# 1.Executable space protection
 
-### 1.1 Opis
+### 1.1 Różne sposoby radzenia sobie z obszarami pamięci, do którym można pisać i które można wykonywać
+
+Dość ważny aspektem bezpieczeństwa jest rozdzielanie uprawnień obszarom pamięci. Pamięć oznaczona jednocześnie jako W (write) i X (execute) stwarza realne zagrożenie, bo pozwala na wykonanie dowolnego kodu przez atakującego.
+
+Problem rozwiązywany jest zarówno sprzętowo, jak i w oprogramowaniu.
+
+Ważna jest polityka (W^X) - mówiąca, że dana strona pamięci może być tylko i wyłącznie albo wykonywalna, albo można do niej pisać. Polityka ta została wprowadzona w OpenBSD 3.3 w 2003 roku.
+
+Odpowiedzią Microsoftu było DEP (Data Execution Preventon) wprowadzone w Windows XP zawierające szereg zabezpieczeń.
+
+Obecnie sprzętowym sposobem realizacji jest tak zwany `NX-bit` odpowiadający właśnie za wykonywalność pamięci. Z tego właśnie korzystać jądro Linuxa, jeżeli procesor obsługuje tą funkcje.
+
+W innym przypadku możliwa jest również emulacja tej funkcjonalności (przykład Exec Shield i PaX)
+
+Na Linuxie do ręcznego ustawienia uprawnień obszaru służy syscall `mprotect()`.
+
+### 1.2 Opis
 
 `gcc` defaultowo włącza non-executable stack - można go wyłączyć flaga `-z execstack`.
 
@@ -18,7 +34,7 @@ Oznaczenie pamięci jako niewykonywalna obecnie najcześciej odbywa się za pomo
 
 Implementacje na różnych systemach nie różnia się.
 
-### 1.2 Proof of concept
+### 1.3 Proof of concept
 Pierwszym omówionym exploitem i obroną przed nim bedzie wykonywalny stack.
 
 Kod programu, który bedzie exploitować jest następujący:
@@ -121,3 +137,11 @@ Exploit działa na programie skompilowanym z wykonywalnym stackiem. Widzimy tu i
 Natomiast skompilowany bez flagi pozwalającej na wykonywanie kodu na stacku nie działa. Program zakończył działanie sygnałem SIGSEGV.
 
 ![img_1.png](img_1.png)
+
+
+### 1.4 Wnioski
+
+Kontrolowanie tego czy dane miejsce w pamięci może wykonywać kod jest ważna i pozwala zapobiegać najprostszym atakom typu buffer overflow. Jednak nie jest to remedium na wszystkie ataki.
+
+Ataki typu ROP lub RET2LIBC, które bedą prezentowane w dalszej częsci projektu mogą być wykonane z `nonexec` stosem.
+
