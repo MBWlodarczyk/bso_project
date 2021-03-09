@@ -156,35 +156,32 @@ Natomiast skompilowany bez flagi pozwalającej na wykonywanie kodu na stacku nie
 
 ### 1.4 Proof of concept - atak na niewykonywalny stos - ret2libc
 
-Ideą tego exploita podmiana adresu powrotu na adres funkcji z biblioteki `libc`. W tym przypadku interesuje nas funkcja system i wywołanie jej se stringiem `/bin/sh`. Argumenty dla tej funkcji przekazywane są przez stos.
+Ideą tego exploita podmiana adresu powrotu na adres funkcji z biblioteki `libc`. W tym przypadku interesuje nas funkcja system i wywołanie jej ze stringiem `/bin/sh`. Argumenty dla tej funkcji przekazywane są przez stos.
 
 Kod podatnego programu:
 
 ```c
-// gcc vuln_2.c -std=c99 -m32 -fno-stack-protector -w -o vuln_2.o
+// gcc vuln.c -std=c99 -m32 -fno-stack-protector -w -o vuln.o
 
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-void secret() {
-    system("sh");
-}
-
 void ask_for_name()
 {
-    char name[16];
-    puts("What's your name?");
-    gets(name);
-    printf("Hi %s!\n", name);
+char name[16];
+puts("What's your name?");
+gets(name);
+printf("Hi %s!\n", name);
 }
 
 int main()
 {
-    ask_for_name();
-    return 0;
+ask_for_name();
+return 0;
 }
+
 ```
 
 ![img_4.png](img/img_7.png)

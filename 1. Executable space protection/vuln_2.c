@@ -5,10 +5,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-void secret() {
-    system("sh");
-}
-
 void ask_for_name()
 {
     char name[16];
