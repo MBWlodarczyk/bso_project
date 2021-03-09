@@ -272,4 +272,4 @@ W podanym przykładzie biblioteki zlinkowane są statycznie przez co ich adres p
 
 ### 1.5 Wnioski
 
-PIE i ASLR są technikami bardzo komplementarnymi i używanie ich razem daje największą ochronę. 
+PIE i ASLR są technikami bardzo komplementarnymi i używanie ich razem daje największą ochronę przed atakami, które używają skakania pomiędzy sekcjami oraz adresowania.

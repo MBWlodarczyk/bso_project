@@ -154,7 +154,11 @@ Natomiast skompilowany bez flagi pozwalającej na wykonywanie kodu na stacku nie
 ![img_1.png](img/img_1.png)
 
 
-### 1.4 Wnioski
+### 1.4 Proof of concept - atak na niewykonywalny stos - ret2libc
+
+
+
+### 1.5 Wnioski
 
 Kontrolowanie tego czy dane miejsce w pamięci może wykonywać kod jest ważna i pozwala zapobiegać najprostszym atakom typu buffer overflow. Jednak nie jest to remedium na wszystkie ataki.
 
