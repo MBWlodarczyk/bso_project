@@ -14,4 +14,6 @@ Partial RELRO jest defaultowym zachowaniem `gcc` i nie wpływa na performance. F
 
 Znacząco wpływa to na czas startu aplikacji, bo linker musi na samym jej starcie uzupełnić cała tablice GOT
 
-### 1.2 Proof of Concept - ret2libc
+W gcc kompiluje się z full RERLO flaga `-z,relro,now`.
+
+### 1.2 Proof of Concept - got overwrite with format string
