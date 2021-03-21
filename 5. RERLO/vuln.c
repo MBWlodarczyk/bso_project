@@ -1,4 +1,4 @@
-// gcc vuln.c -std=c99 -m32 -fno-stack-protector -z execstack -w -o vuln.o
+// gcc vuln.c -std=c99 -m32 -fno-stack-protector  -no-pie -w -o vuln.o
 
 #include <stdio.h>
 #include <string.h>
@@ -8,12 +8,12 @@
 
 int main()
 {
-    char buf[16];
+    char buf[100];
     printf("Hello \n");
     scanf("%s",buf);
         while(strcmp(buf,"exit")) {
-            printf(buf);
             printf("\n");
+            printf(buf);
             scanf("%s",buf);
         }
 
