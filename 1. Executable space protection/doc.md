@@ -8,11 +8,11 @@ Problem rozwiązywany jest zarówno sprzętowo, jak i w oprogramowaniu.
 
 Ważna jest polityka (W^X) - mówiąca, że dana strona pamięci może być tylko i wyłącznie albo wykonywalna, albo można do niej pisać. Polityka ta została wprowadzona w OpenBSD 3.3 w 2003 roku. Polityka jest dość dobrą obroną przed atakami buffer overflow.
 
-Odpowiedzią Microsoftu było DEP (Data Execution Preventon) wprowadzone w Windows XP zawierające szereg zabezpieczeń - między innymi obsługę `NX-bit` oraz póżniej ASLR.
+Odpowiedzią Microsoftu było DEP (Data Execution Preventon) wprowadzone w Windows XP zawierające szereg zabezpieczeń - między innymi obsługę `NX-bit` oraz póżniej - ASLR.
 
 Obecnie sprzętowym sposobem realizacji jest tak zwany `NX-bit` odpowiadający właśnie za wykonywalność pamięci. Z tego właśnie korzystać jądro Linuxa, jeżeli procesor obsługuje tą funkcje.
 
-W innym przypadku możliwa jest również emulacja tej funkcjonalności (przykład Exec Shield i PaX). Emulacja jest jednak dość kosztowna.
+W innym przypadku możliwa jest również emulacja tej funkcjonalności (przykład łatki do jądra - Exec Shield i PaX). Emulacja jest jednak dość kosztowna.
 
 Na Linuxie do ręcznego ustawienia uprawnień obszaru służy syscall `mprotect()`. Wywoływany z odpowiednimi flagami oraz adresami pamięci.
 
@@ -24,7 +24,7 @@ W współczesnym świecie dobre rodzielanie uprawnień obszarom pamięci jest do
 
 Tak samo zachowuje się `clang`. 
 
-Jest to argument przekazywany do linkera, który mapuje proces na przestrzeń adresów. Wtedy też przestrzeń przeznaczona na stos jest oznaczana jako `RWX`.
+Jest to argument przekazywany do linkera, który mapuje proces na przestrzeń adresów. Wtedy też przestrzeń przeznaczona na stos jest oznaczana bez flagi `X` odpowiedzialnej za wykonywalność..
 
 
 Obecnie niektóre stare binarki linuxowe mogą wymagać wykonywalnego stosu, dlatego też opcja może zostać włączona. Wykonywalny stos był niegdyś prawie, że dodatkową funkcja.

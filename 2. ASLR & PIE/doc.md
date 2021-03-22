@@ -16,7 +16,7 @@ W przypadku pliku z PIE liczone są offsety.
 
 ![img_4.png](img/img_4.png)
 
-Widzimy to w callach.
+Widzimy to w sposobie adresacji binarki.
 
 Wpływ PIE na performance aplikacji jest dość duży. Biorąc za przykład architekturę 32bitową domyślnym zachowaniem kompilatora jest zarezerwowanie rejestru `ebx` jako adresu przetrzymującego adres tablicy GOT z której otrzymywane są pozostałe adresy. To generuje spadek performance'u - musimy ustalać adresy pośrednio.
 
