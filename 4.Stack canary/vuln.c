@@ -11,9 +11,9 @@ void secret() {
 
 void ask_for_name()
 {
-    char name[100];
+    char name[12] = {0};
     puts("What's your name?");
-    scanf("%s",name);
+    gets(name);
     printf("Hi %s!\n", name);
 }
 

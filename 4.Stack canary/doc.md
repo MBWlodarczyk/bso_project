@@ -27,7 +27,6 @@ Kod aplikacji podatnej jest taki sam, jaki  i exploit.
 
 ```c
 // gcc vuln.c -no-pie -std=c99 -m32 -fno-stack-protector -z execstack -w -o vuln.o
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
