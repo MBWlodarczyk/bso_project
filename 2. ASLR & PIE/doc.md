@@ -68,13 +68,10 @@ Aby ASLR włączyć na nowo należy ustawić flagę na 2 - ``echo "2" | sudo dd 
 
 Kod programu, który bedzie exploitować jest następujący:
 
-Kompilacja:
-- PIE: NO
-- ASLR: NO
-- EXEC: YES
-- CANARY: NO
+- **PIE & ASLR**: wyłączony - jest to przedmiotem tego exploitu, powrót do funkcji jest możliwy jeżeli wiem, gdzie skoczyć.
+- **CANARY**: wyłączony - kanarek nie pozwoliłby nadpisać adresu powrotu, zajmiemy się nim w dalszej cześci.
 ```c
-// gcc vuln.c -no-pie -std=c99 -m32 -fno-stack-protector -z execstack -w -o vuln.o
+// gcc vuln.c -no-pie -std=c99 -m32 -fno-stack-protector -w -o vuln.o
 
 #include <stdio.h>
 #include <string.h>
@@ -100,9 +97,9 @@ return 0;
 }
 ```
 
-Chcę wywołać funkcję secret spawnującą shella. Aby to zrobić chce nadpisać adres powrotu funkcji `ask_for_name()` na właśnie tą funkcje.
+Chcę wywołać funkcję `secret` spawnującą shella. Aby to zrobić chce nadpisać adres powrotu funkcji `ask_for_name()` na właśnie tą funkcje.
 
-Na początku staram się otrzymać lokalizacje rejestru `eip` przesyłając do ofiary duży string z podłączonym debuggerem.
+Na początku staram się ustalić, kiedy nadpiszę `eip` przesyłając do ofiary duży string z podłączonym debuggerem.
 
 
 ```python
@@ -127,7 +124,6 @@ Adres funkcji `secret()` uzyskam używając gdb.
 ![img_2.png](img/img_2.png)
 
 Adres ten muszę też przekształcić do little endian.
-
 
 
 ```python
@@ -163,15 +159,17 @@ Ideą takiego ataku jest wykorzystanie fragmentów kodu znajdujących się już 
 
 Atakujący za pomocą ROP szuka małych fragmentów assemblera, które kończą się instrukcja `ret`, czyli `c3`. W taki sposób fragment takiego kodu jest wykonywany mimo niewykonywalnego stosu. Kod nie jest wykonywane na stosie. Ze stosu są jedynie pobierane adresy fragmentów kodu - tzw. ROP Gadgetów. 
 
+Z tych Gadgetów tworzy się łancuch realizujący, to co chce atakujący.
+
 Naszym zadaniem jest więc załadować do rejestrów odpowiednie wartości i wywołać `execve` za pomocą łańcucha takich Gadgetów nazywanego ROP chain.
 
 Kod exploitowanej aplikacji:
 
 Kompilacja:
-- PIE: NO
-- ASLR: YES
-- EXEC: YES
-- CANARY: NO
+- **PIE**: wyłączony - PIE został wyłączony, aby Gadgety znajdujące się w kodzie były na stałych miejsach.
+- **ASLR**: bez znaczenia - statycznie zlinkowane biblioteki bez PIE bedą na stałych adresach, stos nie jest używany
+- **EXEC**: wyłączony - jest to idea tego exploitu.
+- **CANARY**: wyłączony - kanarek nie pozwoliłby nadpisać adresu powrotu, zajmiemy się nim w dalszej cześci.
 
 ```c
 // gcc vuln.c -no-pie -std=c99 -m32 -fno-stack-protector -w -static -o  vuln.o
@@ -197,13 +195,13 @@ int main()
 
 Aplikacja jest zlinkowana statyczne w celu uzyskania jak największej ilości gadgetów. W przypadku dużych aplikacji odpowiednie gadgety mogły znajdować się w kodzie aplikacji.
 
-Za pomocą narzędzia Ropper szukam ROP gadgetów:
+Za pomocą narzędzia gotowego narzędzia Ropper szukam ROP gadgetów:
 
 ![img.png](img/img_8.png)
 
 Za pomocą takich instrukcji chcę zbudować chain pozwalający na wywołanie syscalla `execve`. To narzędzie jak i wiele innych oferuje automatyczne składanie łańcuchów ROP z danym celem.
 
-W naszej exploitacji należy pamietać o nie używaniu bajtów `0x0A`, czyli końca linii, który kończy czytanie getsa.
+W naszej exploitacji należy pamietać o nie używaniu bajtów `0x0A`, czyli końca linii, który kończy czytanie `gets`.
 
 Komenda podana poniżej generuje rop chain wywołujący shella i nie zawierający zakazanych bajtów.
 ```bash
@@ -269,6 +267,9 @@ rop += rebase_0(0x00050280) # 0x08098280: add eax, 1; ret;
 rop += rebase_0(0x00030e30) # 0x08078e30: int 0x80; ret; 
 print rop
 ```
+
+Kod wygenerowany przez Ropper realizuje wywołanie funkcji `execve` z `bin/sh`.
+
 Narzędzie generuję kod obsługiwany przez python2, więc w tym przypadku aby exploit wykonać używam komendy:
 
 ```bash
@@ -283,4 +284,4 @@ W podanym przykładzie biblioteki zlinkowane są statycznie przez co ich adres p
 
 ### 1.5 Wnioski
 
-PIE i ASLR są technikami bardzo komplementarnymi i używanie ich razem daje największą ochronę przed atakami, które używają skakania pomiędzy sekcjami oraz adresowania.
+PIE i ASLR są technikami bardzo komplementarnymi i używanie ich razem daje największą ochronę przed atakami, które używają skakania pomiędzy sekcjami oraz offsetów w adresowaniu.

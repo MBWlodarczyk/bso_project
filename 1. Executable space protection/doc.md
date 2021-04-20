@@ -10,7 +10,7 @@ Ważna jest polityka (W^X) - mówiąca, że dana strona pamięci może być tylk
 
 Odpowiedzią Microsoftu było DEP (Data Execution Preventon) wprowadzone w Windows XP zawierające szereg zabezpieczeń - między innymi obsługę `NX-bit` oraz póżniej - ASLR.
 
-Obecnie sprzętowym sposobem realizacji jest tak zwany `NX-bit` odpowiadający właśnie za wykonywalność pamięci. Z tego właśnie korzystać jądro Linuxa, jeżeli procesor obsługuje tą funkcje.
+Obecnie sprzętowym sposobem realizacji jest tak zwany `NX-bit` odpowiadający właśnie za wykonywalność pamięci. Z tego właśnie korzysta jądro Linuxa, jeżeli procesor obsługuje tą funkcje.
 
 W innym przypadku możliwa jest również emulacja tej funkcjonalności (przykład łatki do jądra - Exec Shield i PaX). Emulacja jest jednak dość kosztowna.
 
@@ -33,7 +33,7 @@ Jest to związane z tym jak kompilator `gcc` zachowowywał się w przypadku `nes
 
 Wykonywalny stack jest pokonywany za pomocą oznaczenia pamięci stacku jako niewykonywalnej. Nie ma tu żadnego spadku wydajności, jedynie ewentualnie problemy z kompatybilnością ze starymi plikami.
 
-Wyłączenie wykonywalnego stosu jest dość podstawową metodą obrony przez eksploitacją binarną aplikacji i następne metody uwzględniają tą metodę jako uwzględnioną.
+Wyłączenie wykonywalnego stosu jest dość podstawową metodą obrony przez eksploitacją binarną aplikacji i następne rozdziały bedą w większości zakładać, że opcja ta jest używana.
 
 Oznaczenie pamięci jako niewykonywalna obecnie najcześciej odbywa się za pomocą ustawienia flagi `NX` w tablicy strony.
 
@@ -43,10 +43,10 @@ Implementacje na różnych systemach nie różnia się zbytnio.
 Pierwszym omówionym exploitem i obroną przed nim bedzie wykonywalny stack.
 
 Kompilacja:
-- PIE: NO
-- ASLR: NO
-- EXEC: NO
-- CANARY: NO
+- **PIE**: wyłączony - PIE nie ma wpływu na ten exploit
+- **ASLR**: wyłączone - włączone ASLR sprawi, że adres stosu bedzie losowy, więc przekierowanie wykonania na nasz kod bardzo trudne.
+- **EXEC**: wyłączony - jest to idea tego exploitu.
+- **CANARY**: wyłączony - kanarek nie pozwoliłby nadpisać adresu powrotu, zajmiemy się nim w dalszej cześci.
 
 Kod programu, który bedzie exploitować jest następujący:
 
@@ -76,15 +76,15 @@ int main()
 }
 ```
 
-Błędem jest użyta tu funkcja `gets()` i pozornie działające sprawdzenie długości inputu.
+Błędem jest użyta tu funkcja `gets()` i pozornie działające sprawdzenie długości inputu otrzymywanego od użytkownika.
 
-Dokumentacja `strlen()` mówi, że funkcja sprawdza dlugość do otrzymania `x00`. Taki znak możemy dokleić na końcu inputu, aby przepełnić bufor.
+Dokumentacja `strlen()` mówi, że funkcja sprawdza dlugość do otrzymania `x00`. Taki znak możemy dokleić na końcu inputu, aby przepełnić bufor i oszukać sprawdzenie.
 
 Używając pythona i pakietu pwntools postaram się wykorzystać ten błąd.
 
 Schemat exploitacji jest następujący:
 
-* ustalić miejsce w pamięci, w którym nadpisujemy adres powrotu
+* ustalić ilośc danych, które musimy podać, aby nadpisać adres powrotu
 * ustalić miejsce w pamięci, w którym znajduje się bufor
 * nadpisać adres powrotu adresem bufora, w którym znajduje się nasz kod.
 
@@ -98,11 +98,11 @@ p.readuntil("What's your name?\n")
 name = "a"*8+"\x00"+"a"*15
 ```
 
-Exploit omija sprawdzenie. 
+Exploit omija sprawdzenie. Program kończy się poprawnie i nie wyrzuca błędu.
 
 Podłączając do processu debugger jestem w stanie ustalić jak dużo `a` muszę wysłać, aby nadpisać rejestr `eip`, który odpowiada za powrót z funkcji.
 
-w przypadku podania 16 znaków następna nadpisana pamięć wpada w rejestr `eip`.
+w przypadku podania 24 znaków następna nadpisana pamięć wpada w rejestr `eip`.
 
 Wysłałem wiadomość:
 ```python
@@ -110,9 +110,9 @@ name = "a"*8+"\x00"+"a"*15 + '\x11\x11\x11\x11'
 ```
 ![img_2.png](img/img_2.png)
 
-Rejestr został nadpisany.
+Rejestr został nadpisany. Jest to pierwszy krok exploitacji. Teraz mam kontrolę nad wykonaniem programu. Skieruje ją na swój kod, który wpisze do bufora.
 
-Z debuggera wyciagam adres miejsca,w którym nadpisuje dane.
+Z debuggera wyciagam adres miejsca,w którym nadpisuje dane - adres bufora.
 
 Adres ten jest stały, bo nie używamy ani PIE ani ASLR.
 
@@ -125,7 +125,7 @@ name += "\x20\xd2\xff\xff"
 
 W tym momencie wystarczy do stringa name dokleić shellcode wywołujący execve i odpowiednimi parametrami. Shellcode ten zaczerpnałem ze strony `http://shell-storm.org/shellcode/files/shellcode-811.php`.
 
-Jest to shellcode w assemblerze ładujący odpowiednie argumenty do odpowiednich rejestrów i wywołujący funkcje execve syscallem z argumentami wskazującymi na `bin/sh`.
+Jest to shellcode ładujący odpowiednie argumenty do odpowiednich rejestrów i wywołujący funkcje execve syscallem z argumentami wskazującymi na `bin/sh`.
 
 ```python
 name += "\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x89\xc1\x89\xc2\xb0\x0b\xcd\x80\x31\xc0\x40\xcd\x80"
@@ -167,9 +167,10 @@ Ideą tego exploita podmiana adresu powrotu na adres funkcji z biblioteki `libc`
 Kod podatnego programu:
 
 Kompilacja:
-- ASLR: NO - znacząco ułatwia znalezienie adresu funkcji w libc - exploit możliwy z włączonym.
-- EXEC: YES
-- CANARY: NO
+- **PIE**: włączony - nie wpływa na ten exploit.
+- **ASLR**: wyłączone - włączone ASLR sprawi, że adres funkcji z biblioteki bedzie losowy, co sprawia, że wykonanie jest bardzo utrudnione.
+- **EXEC**: włączony - nie wpływa na exploit.
+- **CANARY**: wyłączony - kanarek nie pozwoliłby nadpisać adresu powrotu, zajmiemy się nim w dalszej cześci.
 
 ```c
 // gcc vuln.c -std=c99 -m32 -fno-stack-protector -w -o vuln.o
@@ -197,9 +198,8 @@ int main()
 
 ![img_4.png](img/img_7.png)
 
-Włączony jest NX, ale systemowo wyłączyłem ASLR.
 
-Staram się ustalić ile losowych znaków muszę przesłać, aby nadpisać powrót.
+Staram się ustalić ile losowych znaków muszę przesłać, aby nadpisać powrót - procedura podobna do ostatniego exploita.
 
 ```python
 from pwn import *
@@ -215,23 +215,26 @@ p.sendline(name)
 
 ![img.png](img/img_3.png)
 
-W `eip` trafiło h.
+W `eip` trafiło h. Wiem już kiedy nadpisuje adres powrotu.
 
-W tym miejscu chcę wkleić adres funkcji `system` z `libc`.
+W tym miejscu chcę wkleić adres funkcji `system` z `libc`, która pozwoli mi wywołać shell.
+
+Sprawdzam adres tej funkcji w debuggerze.
 
 ![img_1.png](img/img_4.png)
 
-Zaraz za tym adresem powinien znajdować się adres powrotu. W tym przypadku nie ma to znaczenia, bo po wywołaniu shell system może wyrzucić sygnał `SEGSIGV`.
+Adres ten doklejam do exploita.
 
-Chcę też znależć stringa `/bin/sh`, który może znajdować się również w `libc`.
+Zaraz za tym adresem powinien znajdować się adres powrotu z tej funkcji. W tym przypadku nie ma to znaczenia, bo po wywołaniu shell system może wyrzucić sygnał `SEGSIGV`.
+
+Chcę też znależć stringa `/bin/sh`, który może znajdować się również w `libc` i przyda się do wywołania funkcji `system`.
 
 W tym celu szukam offsetu tego stringa w samej bibliotece i dodaje go do bazowego addresu biblioteki znalezionego w gdb.
 
-Adres ten biorę z gdb.
 
 ![img_2.png](img/img_5.png)
 
-String znajduje się na offsecie `18c33c`. Dodaje tą wartość do `f6dcc0000`.
+String znajduje się na offsecie `18c33c`. Dodaje tą wartość do `f7dcc0000` - adresu bazowego biblioteki. Otrzymuję adres `f7f5833c`.
 
 W tym momencie exploit wygląda następująco i powinien dostarczyć nam shell mimo `nonexec` stosu.
 ```python
@@ -253,7 +256,11 @@ p.sendline(name)
 p.interactive()
 ```
 
+W tym momencie exploit powinien działać.
+
 ![img_3.png](img/img_6.png)
+
+Otrzymuję interaktywny shell i tym samym omijam zabezpieczenie niewykonywalnego stosu.
 
 ### 1.5 Wnioski
 

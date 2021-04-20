@@ -6,7 +6,7 @@ RELRO to technika polegająca na oznaczaniu sekcji związanych z GOT i PLT jako 
 
 Tablica GOT jest zapełniana podczas przebiegu programu. Kiedy po raz pierwszy funkcja z biblioteki współdzielnej zostanie wywołana GOT zawiera pointer powrotny do PLT, gdzie dynamiczny linker dostaje wywołany. Linker po odnalezieniu funkcji zapisuje ją w GOT. To jest `lazy binding` - raz znaleziona funkcja jest trzymana w pamięci w tablicy GOT, co pozwala zaoszczędzić czas.
 
-Istnieja dwa rodzaje RELRO:
+Istnieją dwa rodzaje RELRO:
 * partial RELRO - jedynie sekcja `.got` jest `read only` - co pozwala na nadpisanie adresu w `.got.plt` i wykonanie złośliwego kodu - przykład niżej.
 * full RELRO - cały GOT jest `read only`, co uniemożliwia ataki z nadpisaniem adresu w GOT.
 
@@ -20,16 +20,13 @@ W gcc kompiluje się z full RERLO flaga `-z,relro,now`.
 
 
 Kompilacja:
-- PIE: NO
-- ASLR: NO
-- EXEC: NO
-- CANARY: NO
-- RERLO: NO
+- **PIE & ASLR**: wyłączone dla stałości adresów
+- **RERLO**: wyłączone - idea exploitu.
 
 Kod podatnej aplikacji:
 
 ```c
-// gcc vuln.c -std=c99 -m32 -fno-stack-protector -no-pie -w -o vuln.o
+// gcc vuln.c -std=c99 -m32-no-pie -w -o vuln.o
 
 #include <stdio.h>
 #include <string.h>
@@ -104,6 +101,8 @@ p.sendline(name)
 p.interactive()
 ```
 
+Adres wysyłam na dwa razy - wypisanie adresu jako liczby w postaci spacji nie jest zbyt dobrym pomysłem.
+
 Używam paddingu, aby pozycje na stosie były niezmienne. Według moich obliczeń adresy wpisane przez mnie znajdują się na 15 i 16 pozycji stosu.
 
 ![img_4.png](img/img_4.png)
@@ -123,7 +122,7 @@ name += '\x10\xc0\x04\x08'
 name += '\x12\xc0\x04\x08'
 ```
 
-Teraz powinniśmy otrzymać pseudo shella, ale po wpisaniu `sh` system spawnuje pełnoprawnego shella.
+Teraz powinniśmy otrzymać pseudo shella - wynika to z konstrukcji programu, ale po wpisaniu `sh` system spawnuje pełnoprawnego shella.
 
 ![img_5.png](img/img_5.png)
 
