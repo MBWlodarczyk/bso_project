@@ -68,6 +68,11 @@ Aby ASLR włączyć na nowo należy ustawić flagę na 2 - ``echo "2" | sudo dd 
 
 Kod programu, który bedzie exploitować jest następujący:
 
+Kompilacja:
+- PIE: NO
+- ASLR: NO
+- EXEC: YES
+- CANARY: NO
 ```c
 // gcc vuln.c -no-pie -std=c99 -m32 -fno-stack-protector -z execstack -w -o vuln.o
 
@@ -77,20 +82,20 @@ Kod programu, który bedzie exploitować jest następujący:
 #include <unistd.h>
 
 void secret() {
-system("sh");
+    system("sh");
 }
 
 void ask_for_name()
 {
 char name[12] = {0};
-puts("What's your name?");
-gets(name);
-printf("Hi %s!\n", name);
+    puts("What's your name?");
+    gets(name);
+    printf("Hi %s!\n", name);
 }
 
 int main()
 {
-ask_for_name();
+    ask_for_name();
 return 0;
 }
 ```
@@ -161,6 +166,12 @@ Atakujący za pomocą ROP szuka małych fragmentów assemblera, które kończą 
 Naszym zadaniem jest więc załadować do rejestrów odpowiednie wartości i wywołać `execve` za pomocą łańcucha takich Gadgetów nazywanego ROP chain.
 
 Kod exploitowanej aplikacji:
+
+Kompilacja:
+- PIE: NO
+- ASLR: YES
+- EXEC: YES
+- CANARY: NO
 
 ```c
 // gcc vuln.c -no-pie -std=c99 -m32 -fno-stack-protector -w -static -o  vuln.o

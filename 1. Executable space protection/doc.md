@@ -1,4 +1,4 @@
-# 1.Executable space protection
+# 1. Executable space protection
 
 ### 1.1 Różne sposoby radzenia sobie z obszarami pamięci, do którym można pisać i które można wykonywać
 
@@ -41,6 +41,12 @@ Implementacje na różnych systemach nie różnia się zbytnio.
 
 ### 1.3 Proof of concept - atak na wykonywalny stos
 Pierwszym omówionym exploitem i obroną przed nim bedzie wykonywalny stack.
+
+Kompilacja:
+- PIE: NO
+- ASLR: NO
+- EXEC: NO
+- CANARY: NO
 
 Kod programu, który bedzie exploitować jest następujący:
 
@@ -100,7 +106,7 @@ w przypadku podania 16 znaków następna nadpisana pamięć wpada w rejestr `eip
 
 Wysłałem wiadomość:
 ```python
-name = "a"*8+"\x00"+"a"*15 + '\x00\x00\x00\x00'
+name = "a"*8+"\x00"+"a"*15 + '\x11\x11\x11\x11'
 ```
 ![img_2.png](img/img_2.png)
 
@@ -160,6 +166,11 @@ Ideą tego exploita podmiana adresu powrotu na adres funkcji z biblioteki `libc`
 
 Kod podatnego programu:
 
+Kompilacja:
+- ASLR: NO - znacząco ułatwia znalezienie adresu funkcji w libc - exploit możliwy z włączonym.
+- EXEC: YES
+- CANARY: NO
+
 ```c
 // gcc vuln.c -std=c99 -m32 -fno-stack-protector -w -o vuln.o
 
@@ -170,16 +181,16 @@ Kod podatnego programu:
 
 void ask_for_name()
 {
-char name[16];
-puts("What's your name?");
-gets(name);
-printf("Hi %s!\n", name);
+    char name[16];
+    puts("What's your name?");
+    gets(name);
+    printf("Hi %s!\n", name);
 }
 
 int main()
 {
-ask_for_name();
-return 0;
+    ask_for_name();
+    return 0;
 }
 
 ```

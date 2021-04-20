@@ -19,6 +19,13 @@ W gcc kompiluje się z full RERLO flaga `-z,relro,now`.
 ### 1.2 Proof of Concept - got overwrite with format string
 
 
+Kompilacja:
+- PIE: NO
+- ASLR: NO
+- EXEC: NO
+- CANARY: NO
+- RERLO: NO
+
 Kod podatnej aplikacji:
 
 ```c
@@ -120,7 +127,7 @@ Teraz powinniśmy otrzymać pseudo shella, ale po wpisaniu `sh` system spawnuje 
 
 ![img_5.png](img/img_5.png)
 
-Udało się.
+Udało się wykonać exploit.
 
 Exploit odpalany z włączonym relro nie daje żadnego skutku - adres got znajduję się w innym miejscu. W przypadku próby nadpisania tego miejsca następuję `SIGSEGV` - chcieliśmy nadpisać sekcje read-only. Kod tego exploitu znajduję się w `exploit1.py`.
 

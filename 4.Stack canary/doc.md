@@ -16,8 +16,21 @@ Jest to defaultowa opcja kompilatora `gcc`, można ją wyłączyć flagą `-fno-
 
 Podobnie zachowuje się `clang`.
 
+Kanarek sprawdza się przeciwko atakom, które nadpisują adres powrotu - ataki typu `ret2libc`, `ropchain` są bezużyteczne bez znajomości kanarka. 
 
-### Proof of concept
+Kanarek nie chroni przed atakami typu `format string`.
+
+### 1.2 Wygląd w assemblerze
+
+Koniec wywołania funkcji z kanarkiem wygląda następująco.
+
+![img_2.png](img/img_2.png)
+
+Do rejestru `eax` ładowany jest aktualny kanarek funkcji. Następnie odejmowany jest on od zapisanego kanarka w `gs:0x14`. W przypadku zgodności kanarków wartość odejmowania to zero.
+
+Wtedy ustawiana jest flaga zero i instrukcja `je` przeskakuję `call` do funkcji mówiącej o błędzie kanarka i wywołanie kończy się normalnie. W odwrotnym przypadku wywoływana jest funkcja, która obsługuje błąd.
+
+### 1.3 Proof of concept - prosta zmiana wykonania
 
 Kanarek jest dobra metodą obrony przed atakami typu `ASLR & PIE/exploit_1`. Ataki bazujące na nadpisaniu adresu powrotu są dobrze łatane przez kanarka stosu. Jest to lepsza metoda niż ASLR, bo w 100% skuteczna.
 
@@ -33,20 +46,20 @@ Kod aplikacji podatnej jest taki sam, jaki  i exploit.
 #include <unistd.h>
 
 void secret() {
-system("sh");
+    system("sh");
 }
 
 void ask_for_name()
 {
-char name[12] = {0};
-puts("What's your name?");
-gets(name);
-printf("Hi %s!\n", name);
+    char name[12] = {0};
+    puts("What's your name?");
+    gets(name);
+    printf("Hi %s!\n", name);
 }
 
 int main()
 {
-ask_for_name();
+a   sk_for_name();
 return 0;
 }
 ```
@@ -63,4 +76,18 @@ name = "AAAABBBBCCCCDDDDEEEEFFFFGGGGHHHHIIIIJJJJKKKKLLLLMMMMNNNNOOOO"
 p.sendline(name)
 ```
 
-W tym przypadku przy kompilacji z kanarkiem
+W tym przypadku przy kompilacji bez kanarka udaje się dostać shell.
+
+![img.png](img/img.png)
+
+A w przypadku kompilacji z kanarkiem nie udaje się - widzimy tutaj błąd, który wyrzucił kanarek.
+
+![img_1.png](img/img_1.png)
+
+### 1.4 Proof of concept - atak na kanarka
+
+
+
+### 1.5 Wnioski
+
+Kanarek stosu jest dobrą metodą zabezpieczenia przed nadpisaniem adresu powrotu. Dobrą praktyką jest stosowanie go w funkcjach zawierających bufor.
