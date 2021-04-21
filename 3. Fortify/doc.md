@@ -38,7 +38,6 @@ Opcja `fortify source` sprawia też ze ataki typu `format string` gdzie następu
 
 
 
-
 ### 1.2 Wydajność
 
 `Fortify source` może wpłynąć na wielkość kodu, który kompilujemy, ale jest to na pewno dość mały wpływ.

