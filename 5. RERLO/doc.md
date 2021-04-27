@@ -1,6 +1,6 @@
 # RERLO
 
-### 1.1 Opis
+### 1. Opis
 
 RELRO to technika polegająca na oznaczaniu sekcji związanych z GOT i PLT jako tylko do odczytu, co nie pozwala nadpisać tych sekcji.
 
@@ -16,7 +16,7 @@ Znacząco wpływa to na czas startu aplikacji, bo linker musi na samym jej starc
 
 W gcc kompiluje się z full RERLO flaga `-z,relro,now`.
 
-### 1.2 Proof of Concept - got overwrite with format string
+### 2. Proof of Concept - got overwrite with format string
 
 
 Kompilacja:
@@ -131,4 +131,12 @@ Udało się wykonać exploit.
 Exploit odpalany z włączonym relro nie daje żadnego skutku - adres got znajduję się w innym miejscu. W przypadku próby nadpisania tego miejsca następuję `SIGSEGV` - chcieliśmy nadpisać sekcje read-only. Kod tego exploitu znajduję się w `exploit1.py`.
 
 ![img_6.png](img/img_6.png)
+
+### 3. Wnioski
+
+RERLO jest dość prostym mechanizmem obrony przed exploitacją. Chroni przed pewnymi typami ataków i nie jest to opcja, której stosowanie ma sens w przypadku, np. wykonywalnego stosu i wyłączonego ASLR.
+
+Full RERLO jest opcja dość kosztowną i nie powinno się używać jej do aplikacji, które wymagają szybkich czasów startu. Patrial RERLO może i powinno być stosowane defaultowo, bo jest bezproblemowe wydajnościowo, a podnosi bezpieczeństwo.
+
+
 

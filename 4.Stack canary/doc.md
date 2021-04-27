@@ -1,6 +1,6 @@
 # Stack canary
 
-### 1.1 Opis
+### 1. Opis
 
 Kanarek jest mechanizmem zabezpieczenia stosu. Stara się on zapobiegać zmianie wykonania programu za pomocą nadpisywanie elementów na stosie.
 
@@ -20,7 +20,7 @@ Kanarek sprawdza się przeciwko atakom, które nadpisują adres powrotu - ataki 
 
 Kanarek nie chroni przed atakami typu `format string`.
 
-### 1.2 Wygląd w assemblerze
+### 2. Wygląd w assemblerze
 
 Koniec wywołania funkcji z kanarkiem wygląda następująco.
 
@@ -30,7 +30,7 @@ Do rejestru `eax` ładowany jest aktualny kanarek funkcji. Następnie odejmowany
 
 Wtedy ustawiana jest flaga zero i instrukcja `je` przeskakuję `call` do funkcji mówiącej o błędzie kanarka i wywołanie kończy się normalnie. W odwrotnym przypadku wywoływana jest funkcja, która obsługuje błąd.
 
-### 1.3 Proof of concept - prosta zmiana wykonania
+### 3. Proof of concept - prosta zmiana wykonania
 
 Kanarek jest dobra metodą obrony przed atakami typu `ASLR & PIE/exploit_1`. Ataki bazujące na nadpisaniu adresu powrotu są dobrze łatane przez kanarka stosu. Jest to lepsza metoda niż ASLR, bo w 100% skuteczna.
 
@@ -96,7 +96,7 @@ A w przypadku kompilacji z kanarkiem nie udaje się - widzimy tutaj błąd, któ
 ![img_1.png](img/img_6.png)
 
 
-### 2.4 Proof of concept - leak kanarka i wykonywalny stos
+### 4. Proof of concept - leak kanarka i wykonywalny stos
 
 Istotą tego exploitu będzie pozyskanie wartości kanarka za pomocą format string.
 
@@ -190,10 +190,10 @@ Został wywołany shell - exploit działa.
 
 ![img_4.png](img/img_4.png)
 
-### 1.5 Proof of concept - GOT overwrite z format string
+### 5. Proof of concept - GOT overwrite z format string
 
 Opis tego exploita znajduje się w następnym rodziale, jest to exploit przed, którym kanarek nie jest w stanie ochronić. Kanarek w żaden sposób nie chroni przed atakami typu format string oraz atakami typu GOT.
 
-### 1.6 Wnioski
+### 6. Wnioski
 
 Kanarek stosu jest dobrą metodą zabezpieczenia przed nadpisaniem adresu powrotu. Dobrą praktyką jest stosowanie go w funkcjach zawierających bufor.

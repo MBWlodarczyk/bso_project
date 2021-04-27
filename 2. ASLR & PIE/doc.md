@@ -1,8 +1,8 @@
-# 1. ASLR & PIE
+# ASLR & PIE
 
 Techniki obrony ASLR i PIE są ze sobą sciśle powiązane, dlatego ich omówienie znajduję się w jednym pliku.
 
-### 1.1 PIE
+### 1. PIE
 
 PIE (Position indepented executable) - jest to sposób kompilacji kodu w taki sposób, że jest on niezależny od pozycji w pamięci.
 
@@ -26,7 +26,7 @@ Badania mówią o średnio 10% spadku wydajności. Maksymalnie do 25%.
 
 PIE pozwala na lepsze użycie ASLR.
 
-### 1.2 ASLR
+### 2. ASLR
 
 ASLR (Address space layout randomization) - to technika polegająca na losowym umieszczeniu sekcji programu, aby uniemożliwić
 skakanie do danych sekcji. Jest to dość duże utrudnienie w atakach binarnych. W dużej cześci ataków oznacza to po prostu zgadywanie danej wartości do skutku.
@@ -56,7 +56,7 @@ W Linuxie ASLR jest implementowane w kernelu. Na linuxie ASLR ma wpływ na perfo
 
 Na Windowsie ASLR jest włączany poprzez linkowanie z opcja `/DYNAMICBASE`. Na windowsie wpływ na performance run-time jest raczej niewielki, ale ASLR może spowolnić ładowanie modułów.
 
-### 1.3 Proof of Concept - sterowanie wykonaniem programu bez randomizacji
+### 3. Proof of Concept - sterowanie wykonaniem programu bez randomizacji
 
 Exploit nie używa wykonalnego stosu.
 
@@ -151,7 +151,7 @@ Adres, który wywołuje `eip` jest losowym adresem, więc wykonanie konczy się 
 
 Warto dodać, że w przypadku wykonania exploitu na programie kompilowanym z PIE, ale z wyłączonym ASLR - exploit działa. Samo PIE bez ASLR nie chroni przed takim atakiem.
 
-### 1.4 Proof of concept - atak typu ROP
+### 4. Proof of concept - atak typu ROP
 
 W tym momencie warto byłoby przyjrzeć się atakom typu ROP. 
 
@@ -282,6 +282,6 @@ Komenda ta w sprytny sposób sprawia, że otrzymany shell nie dostaje `EOF` i je
 
 W podanym przykładzie biblioteki zlinkowane są statycznie przez co ich adres pozostaje taki sam. W przypadku linkowania dynamicznego wraz z włączonym ASLR atak ten staje sie znacznie trudniejszy. W tym przypadku exploit nie działa z dynamicznym linkowaniem. Nie można kompilować jednoczesnie z flaga PIE i static.
 
-### 1.5 Wnioski
+### 5. Wnioski
 
 PIE i ASLR są technikami bardzo komplementarnymi i używanie ich razem daje największą ochronę przed atakami, które używają skakania pomiędzy sekcjami oraz offsetów w adresowaniu.
