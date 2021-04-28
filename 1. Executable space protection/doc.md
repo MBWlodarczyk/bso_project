@@ -1,6 +1,6 @@
-# 1. Executable space protection
+# Executable space protection
 
-### 1.1 Różne sposoby radzenia sobie z obszarami pamięci, do którym można pisać i które można wykonywać
+### 1. Różne sposoby radzenia sobie z obszarami pamięci, do którym można pisać i które można wykonywać
 
 Dość ważny aspektem bezpieczeństwa jest rozdzielanie uprawnień obszarom pamięci. Pamięć oznaczona jednocześnie jako W (write) i X (execute) stwarza realne zagrożenie, bo pozwala na wykonanie dowolnego kodu przez atakującego.
 
@@ -18,7 +18,7 @@ Na Linuxie do ręcznego ustawienia uprawnień obszaru służy syscall `mprotect(
 
 W współczesnym świecie dobre rodzielanie uprawnień obszarom pamięci jest dość znane i implementowane jako domyślne funkcje w najczęstszych przypadkach. Takim przypadkiem jest niewykonywalność stosu wywołań, który postaram się zeksploitować w następnych punktach.
 
-### 1.2 Opis
+### 2. Opis
 
 `gcc` defaultowo włącza non-executable stack - można go wyłączyć flaga `-z execstack`.
 
@@ -39,7 +39,7 @@ Oznaczenie pamięci jako niewykonywalna obecnie najcześciej odbywa się za pomo
 
 Implementacje na różnych systemach nie różnia się zbytnio.
 
-### 1.3 Proof of concept - atak na wykonywalny stos
+### 3. Proof of concept - atak na wykonywalny stos
 Pierwszym omówionym exploitem i obroną przed nim bedzie wykonywalny stack.
 
 Kompilacja:
@@ -160,7 +160,7 @@ Natomiast skompilowany bez flagi pozwalającej na wykonywanie kodu na stacku nie
 ![img_1.png](img/img_1.png)
 
 
-### 1.4 Proof of concept - atak na niewykonywalny stos - ret2libc
+### 4. Proof of concept - atak na niewykonywalny stos - ret2libc
 
 Ideą tego exploita podmiana adresu powrotu na adres funkcji z biblioteki `libc`. W tym przypadku interesuje nas funkcja system i wywołanie jej ze stringiem `/bin/sh`. Argumenty dla tej funkcji przekazywane są przez stos.
 
@@ -262,7 +262,7 @@ W tym momencie exploit powinien działać.
 
 Otrzymuję interaktywny shell i tym samym omijam zabezpieczenie niewykonywalnego stosu.
 
-### 1.5 Wnioski
+### 5. Wnioski
 
 Kontrolowanie tego czy dane miejsce w pamięci może wykonywać kod jest ważna i pozwala zapobiegać najprostszym atakom typu buffer overflow. Jednak nie jest to remedium na wszystkie ataki.
 

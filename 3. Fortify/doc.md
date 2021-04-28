@@ -1,6 +1,6 @@
 # Fortify source
 
-### 1.1 Opis
+### 1. Opis
 
 Technika `fortify source` polega na wykrywaniu przepełnienia buffora w `libc`. 
 
@@ -38,16 +38,15 @@ Opcja `fortify source` sprawia też ze ataki typu `format string` gdzie następu
 
 
 
-
-### 1.2 Wydajność
+### 2. Wydajność
 
 `Fortify source` może wpłynąć na wielkość kodu, który kompilujemy, ale jest to na pewno dość mały wpływ.
 
 Opcja ta nie ma wpływu na performance, a nawet może go poprawiać.
 
-### 1.3 Proof of concept
+### 3. Proof of concept
 
 
-### 1.? Wnioski
+### 4. Wnioski
 
 Opcja `fortify-source` jest opcja, która powinna być włączona domyślnie. Jest to bardzo sprawny sposób minimalizacji ryzyka błędu w aplikacji. Równocześnie opcja ta nie ma dużego wpływu na performance.
