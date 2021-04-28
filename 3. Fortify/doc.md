@@ -46,6 +46,73 @@ Opcja ta nie ma wpływu na performance, a nawet może go poprawiać.
 
 ### 3. Proof of concept
 
+W tym przypadku zdecydowałem się zaprezentować po prostu przypadki, w których opcja ta chroni nas przed exploitacją. Jest to dość duża grupa exploitów.
+
+#### 3.1 Niebezpieczne funkcje
+
+W przypadku kompilacji kodu z funkcja niebezpieczną typu memcpy, mempcpy, memmove, memset, strcpy, stpcpy, strncpy, strcat, strncat, sprintf, vsprintf, snprintf, vsnprintf oraz gets. Funkcja powinna zostać opakowana funkcja sprawdzającą długość.
+
+![img.png](img/img.png)
+
+Tak też się dzieje. W przypadku próby nadpisania bufora wykonanie kończy się błędem.
+
+![img_1.png](img/img_1.png)
+
+#### 3.2 Przepełnienie struktur
+
+Kod aplikacji:
+
+```c
+#include <stdio.h>
+#include <string.h>
+
+struct personal_data{
+	char name[5];
+	char surname[5];
+};
+
+int main(){
+	struct personal_data data;
+	memset(data.name,0,sizeof(data.name));
+	memset(data.name,0,sizeof(data));
+	memset(data.name,0,sizeof(data)+1);
+	printf(data.name);
+	return 0;
+}
+
+
+```
+
+O błędzie przepełnienia struktury dowiadujemy się już przy kompilacji.
+
+![img_2.png](img/img_2.png)
+
+Kiedy próbujemy wykonać program wyrzuca on błąd.
+
+![img_3.png](img/img_3.png)
+
+Kompilacja z flaga 1 lub 2 zachowuje się odpowiednio dla struktur.
+
+#### 3.3 Format string
+
+Kod aplikacji:
+
+```c
+#include <stdio.h>
+
+int main(){
+	char msg[16];
+	scanf("%s",msg);
+	printf(msg);
+}
+```
+W przypadku próby zapisu format stringiem do wykonywalnej pamięci flaga również chroni przed exploitacją.
+
+![img_4.png](img/img_4.png)
+
+W przypadku odczytu argumentu pozycjonalnego, kiedy poprzedzające nie były czytane wykonanie też będzie przerwane.
+
+![img_5.png](img/img_5.png)
 
 ### 4. Wnioski
 
