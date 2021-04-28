@@ -282,6 +282,12 @@ Komenda ta w sprytny sposób sprawia, że otrzymany shell nie dostaje `EOF` i je
 
 W podanym przykładzie biblioteki zlinkowane są statycznie przez co ich adres pozostaje taki sam. W przypadku linkowania dynamicznego wraz z włączonym ASLR atak ten staje sie znacznie trudniejszy. W tym przypadku exploit nie działa z dynamicznym linkowaniem. Nie można kompilować jednoczesnie z flaga PIE i static.
 
-### 5. Wnioski
+### 5. Proof of concept - ręczny ROP
+
+Zmotywowany przez `@dadurek` postanowiłem udowodnić, że ROP jest wykonywalny ręcznie i pewnie bardziej optymalny od zautomatyzowanego.
+
+Kod aplikacji pozostaje ten sam.
+
+### 6. Wnioski
 
 PIE i ASLR są technikami bardzo komplementarnymi i używanie ich razem daje największą ochronę przed atakami, które używają skakania pomiędzy sekcjami oraz offsetów w adresowaniu.

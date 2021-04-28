@@ -116,4 +116,7 @@ W przypadku odczytu argumentu pozycjonalnego, kiedy poprzedzające nie były czy
 
 ### 4. Wnioski
 
-Opcja `fortify-source` jest opcja, która powinna być włączona domyślnie. Jest to bardzo sprawny sposób minimalizacji ryzyka błędu w aplikacji. Równocześnie opcja ta nie ma dużego wpływu na performance.
+Opcja `fortify-source` jest opcja, która powinna być włączona domyślnie. Jest to bardzo sprawny sposób minimalizacji ryzyka błędu w aplikacji. 
+
+
+Potrafi ostrzec programistę przed błędem, a równocześnie opcja ta nie ma dużego wpływu na performance.
