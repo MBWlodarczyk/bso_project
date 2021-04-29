@@ -2,7 +2,7 @@
 
 ### 1. Opis
 
-Technika `fortify source` polega na wykrywaniu przepełnienia buffora w `libc`. 
+Technika `fortify source` polega na wykrywaniu przepełnienia bufora w `libc`. 
 
 `Fortify source` jest wywoływane flagą `-D_FORTIFY_SOURCE={1,2}` gdzie `1,2` oznacza poziom zabezpieczeń.
 
@@ -14,13 +14,13 @@ Flaga ta działa tylko jeżeli obecna jest też flaga `-O1` lub wyższa.
 __memcpy_chk(void * dest, const void * src, size_t len, size_t destlen)
 ```
 
-Funkcje te nie powinny być wywoływane przez użytkownika, są one używane właśnie w `fortify source`. Kiedy kompilator nie może dowieść, że funkcja nie posiada błedu, zamienia ją na jej bezpieczny odpowiednik.
+Funkcje te nie powinny być wywoływane przez użytkownika, są one używane właśnie w `fortify source`. Kiedy kompilator nie jest w stanie ustalić, że funkcja nie posiada błędu, zamienia ją na jej bezpieczny odpowiednik.
 
-Zapewnie to `run-time` protekcje przed przepełnieniem bufora.
+Zapewnia to `run-time` protekcję przed przepełnieniem bufora.
 
 Długość bufora obliczana jest za pomocą funkcji `__builtin_object_size()`, która zwraca bajty pozostające w strukturze. Jeżeli w czasie kompilacji nie znana jest wielkość to długością jest `(size_t) -1`.
 
-Różnice w poziomie 1 i 2 określa to jak liczone są pozostałe bajty w powyższej funkcji. Rozważmy dana strukturę:
+Różnica pomiędzy poziomiomem 1 i 2 określa to jak liczone są pozostałe bajty w powyższej funkcji. Rozważmy dana strukturę:
 
 ```c
 struct test
@@ -30,11 +30,11 @@ struct test
 }
 ```
 
-W tym przypadku zapisywanie do `test1` wiecej niż 5 bajtów może być zdefiniowanym zachowanie programu, albo błędem. Dla opcji `1` pisząc do `test.test1` można zapisać 10 bajtów, a z opcja `2` można zapisać jedynie 5 bajtów. Należy o tym pamiętać używając tych flag.
+W tym przypadku zapisywanie do `test1` więcej niż 5 bajtów, może być zdefiniowanym zachowaniem programu lub błędem. Dla opcji `1` pisząc do `test.test1` można zapisać 10 bajtów, a z opcją `2` można zapisać jedynie 5 bajtów. Należy o tym pamiętać używając tych flag.
 
 Kompilator też ostrzeże o błędzie w przypadku takiego zapisu.
 
-Opcja `fortify source` sprawia też ze ataki typu `format string` gdzie następuję użycie `%n` jest poprawne tylko tylko w `read-only memory` co efektywnie blokuje ten rodzaj ataków. Opcja ta nie pozwala też na pomijanie argumentów w `format string` - czyli stringi formatujące typu `printf("%2$s\n", 0, "Test");` są nie poprawne, gdyż pierwszy argument jest pominajny.
+Opcja `fortify source` sprawia też, że ataki typu `format string` gdzie następuje użycie `%n` jest poprawne tylko w `read-only memory` co efektywnie blokuje ten rodzaj ataków. Opcja ta nie pozwala też na pomijanie argumentów w `format string` - czyli stringi formatujące typu `printf("%2$s\n", 0, "Test");` są nie poprawne, gdyż pierwszy argument jest pomijany.
 
 
 
@@ -50,7 +50,7 @@ W tym przypadku zdecydowałem się zaprezentować po prostu przypadki, w któryc
 
 #### 3.1 Niebezpieczne funkcje
 
-W przypadku kompilacji kodu z funkcja niebezpieczną typu memcpy, mempcpy, memmove, memset, strcpy, stpcpy, strncpy, strcat, strncat, sprintf, vsprintf, snprintf, vsnprintf oraz gets. Funkcja powinna zostać opakowana funkcja sprawdzającą długość.
+W przypadku kompilacji kodu z funkcję niebezpieczną typu memcpy, mempcpy, memmove, memset, strcpy, stpcpy, strncpy, strcat, strncat, sprintf, vsprintf, snprintf, vsnprintf oraz gets. Funkcja powinna zostać opakowana funkcją sprawdzającą długość.
 
 ![img.png](img/img.png)
 
@@ -91,7 +91,7 @@ Kiedy próbuję wykonać program wyrzuca on błąd.
 
 ![img_3.png](img/img_3.png)
 
-Kompilacja z flaga 1 lub 2 zachowuje się odpowiednio dla struktur.
+Kompilacja z flagą 1 lub 2 zachowuje się odpowiednio dla struktur.
 
 #### 3.3 Format string
 
@@ -116,7 +116,7 @@ W przypadku odczytu argumentu pozycjonalnego, kiedy poprzedzające nie były czy
 
 ### 4. Wnioski
 
-Opcja `fortify-source` jest opcja, która powinna być włączona domyślnie. Jest to bardzo sprawny sposób minimalizacji ryzyka błędu w aplikacji. 
+Opcja `fortify-source` jest opcją, która powinna być włączona domyślnie. Jest to bardzo sprawny sposób minimalizacji ryzyka błędu w aplikacji. 
 
 
 Potrafi ostrzec programistę przed błędem, a równocześnie opcja ta nie ma dużego wpływu na performance.
