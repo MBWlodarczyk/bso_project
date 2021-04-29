@@ -48,7 +48,7 @@ Kompilacja:
 - **EXEC**: wyłączony - jest to idea tego exploitu.
 - **CANARY**: wyłączony - kanarek nie pozwoliłby nadpisać adresu powrotu, zajmiemy się nim w dalszej cześci.
 
-Kod programu, który bedzie exploitować jest następujący:
+Kod programu, który bedę exploitować jest następujący:
 
 ```c
 // gcc vuln.c -no-pie -std=c99 -m32 -fno-stack-protector -z execstack -w -o vuln.o
@@ -100,9 +100,9 @@ name = "a"*8+"\x00"+"a"*15
 
 Exploit omija sprawdzenie. Program kończy się poprawnie i nie wyrzuca błędu.
 
-Podłączając do processu debugger jestem w stanie ustalić jak dużo `a` muszę wysłać, aby nadpisać rejestr `eip`, który odpowiada za powrót z funkcji.
+Podłączając do procesu debugger jestem w stanie ustalić jak dużo `a` muszę wysłać, aby nadpisać rejestr `eip`, który odpowiada za powrót z funkcji.
 
-w przypadku podania 24 znaków następna nadpisana pamięć wpada w rejestr `eip`.
+W przypadku podania 24 znaków następna nadpisana pamięć wpada w rejestr `eip`.
 
 Wysłałem wiadomość:
 ```python
@@ -256,7 +256,7 @@ p.sendline(name)
 p.interactive()
 ```
 
-W tym momencie exploit powinien działać.
+Exploit działa.
 
 ![img_3.png](img/img_6.png)
 

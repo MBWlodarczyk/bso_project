@@ -91,7 +91,7 @@ W tym przypadku przy kompilacji bez kanarka udaje się dostać shell.
 
 ![img.png](img/img_5.png)
 
-A w przypadku kompilacji z kanarkiem nie udaje się - widzimy tutaj błąd, który wyrzucił kanarek.
+A w przypadku kompilacji z kanarkiem nie udaje się - widać tutaj błąd, który wyrzucił kanarek.
 
 ![img_1.png](img/img_6.png)
 

