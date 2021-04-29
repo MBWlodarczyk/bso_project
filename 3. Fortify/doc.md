@@ -8,7 +8,7 @@ Technika `fortify source` polega na wykrywaniu przepełnienia buffora w `libc`.
 
 Flaga ta działa tylko jeżeli obecna jest też flaga `-O1` lub wyższa.
 
-`Libc` zawiera funkcję, które są wrapperami na funkcje, które są niebezpieczne, ale przyjmującymi argument oznaczający długość bufora. Dla przykładu funkcja:
+`Libc` zawiera funkcje, które są wrapperami na funkcje, które są niebezpieczne, ale przyjmującymi argument oznaczający długość bufora. Dla przykładu funkcja:
 
 ```c
 __memcpy_chk(void * dest, const void * src, size_t len, size_t destlen)
@@ -32,7 +32,7 @@ struct test
 
 W tym przypadku zapisywanie do `test1` wiecej niż 5 bajtów może być zdefiniowanym zachowanie programu, albo błędem. Dla opcji `1` pisząc do `test.test1` można zapisać 10 bajtów, a z opcja `2` można zapisać jedynie 5 bajtów. Należy o tym pamiętać używając tych flag.
 
-Kompilator też ostrzeże nas o błędzie w przypadku takiego zapisu.
+Kompilator też ostrzeże o błędzie w przypadku takiego zapisu.
 
 Opcja `fortify source` sprawia też ze ataki typu `format string` gdzie następuję użycie `%n` jest poprawne tylko tylko w `read-only memory` co efektywnie blokuje ten rodzaj ataków. Opcja ta nie pozwala też na pomijanie argumentów w `format string` - czyli stringi formatujące typu `printf("%2$s\n", 0, "Test");` są nie poprawne, gdyż pierwszy argument jest pominajny.
 
@@ -83,11 +83,11 @@ int main(){
 
 ```
 
-O błędzie przepełnienia struktury dowiadujemy się już przy kompilacji.
+O błędzie przepełnienia struktury dowiaduję się już przy kompilacji.
 
 ![img_2.png](img/img_2.png)
 
-Kiedy próbujemy wykonać program wyrzuca on błąd.
+Kiedy próbuję wykonać program wyrzuca on błąd.
 
 ![img_3.png](img/img_3.png)
 
@@ -120,3 +120,5 @@ Opcja `fortify-source` jest opcja, która powinna być włączona domyślnie. Je
 
 
 Potrafi ostrzec programistę przed błędem, a równocześnie opcja ta nie ma dużego wpływu na performance.
+
+Jest to dobry sposób walki ze złym kodem, ale nie tak dobry jak zatrudnienie dobrego programisty.

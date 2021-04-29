@@ -32,7 +32,7 @@ PIE pozwala na lepsze użycie ASLR.
 ASLR (Address space layout randomization) - to technika polegająca na losowym umieszczeniu sekcji programu, aby uniemożliwić
 skakanie do danych sekcji. Jest to dość duże utrudnienie w atakach binarnych. W dużej cześci ataków oznacza to po prostu zgadywanie danej wartości do skutku.
 
-ASLR najlepiej stosować na kodzie skompilowanym z PIE, wtedy możemy załadować kod i PLT do losowych adresów, w przeciwnym razie kod i PLT jest statyczny, a losowość dotyczy jedynie bibliotek, stosu oraz sterty.
+ASLR najlepiej stosować na kodzie skompilowanym z PIE, wtedy można załadować kod i PLT do losowych adresów, w przeciwnym razie kod i PLT jest statyczny, a losowość dotyczy jedynie bibliotek, stosu oraz sterty.
 
 Samo ASLR może okazać się pomocne w obronie przed atakami na wykonywalny stos - wtedy skok na taki stos nie jest prosty, bo jego adres jest losowy. Jest to też dobra obrona przed atakami typu ROP oraz ret2libc.
 
@@ -59,7 +59,6 @@ Na Windowsie ASLR jest włączany poprzez linkowanie z opcja `/DYNAMICBASE`. Na 
 
 ### 3. Proof of Concept - sterowanie wykonaniem programu bez randomizacji
 
-Exploit nie używa wykonalnego stosu.
 
 Przed wykonaniem tego exploitu wyłączyłem ASLR w swoim systemie. Odbywa się to za pomocą ustawienia flagi w systemie.
 
@@ -70,7 +69,7 @@ Aby ASLR włączyć na nowo należy ustawić flagę na 2 - ``echo "2" | sudo dd 
 Kod programu, który bedzie exploitować jest następujący:
 
 - **PIE & ASLR**: wyłączony - jest to przedmiotem tego exploitu, powrót do funkcji jest możliwy jeżeli wiem, gdzie skoczyć.
-- **CANARY**: wyłączony - kanarek nie pozwoliłby nadpisać adresu powrotu, zajmiemy się nim w dalszej cześci.
+- **CANARY**: wyłączony - kanarek nie pozwoliłby nadpisać adresu powrotu, zajmę się nim w dalszej cześci.
 ```c
 // gcc vuln.c -no-pie -std=c99 -m32 -fno-stack-protector -w -o vuln.o
 
@@ -98,7 +97,7 @@ return 0;
 }
 ```
 
-Chcę wywołać funkcję `secret` spawnującą shella. Aby to zrobić chce nadpisać adres powrotu funkcji `ask_for_name()` na właśnie tą funkcje.
+Chcę wywołać funkcję `secret` spawnującą shella. Aby to zrobić, chce nadpisać adres powrotu funkcji `ask_for_name()` na właśnie tą funkcje.
 
 Na początku staram się ustalić, kiedy nadpiszę `eip` przesyłając do ofiary duży string z podłączonym debuggerem.
 
@@ -118,7 +117,7 @@ p.sendline(name)
 ![img.png](img/img.png)
 
 
-W rejestr `eip` trafiła litera G. Co pozwala mi ustalić miejsce, w które wstrzykne adres funkcji secret().
+W rejestr `eip` trafiła litera G. Co pozwala mi ustalić miejsce, w które wstrzyknę adres funkcji secret().
 
 Adres funkcji `secret()` uzyskam używając gdb.
 
@@ -158,9 +157,9 @@ W tym momencie warto byłoby przyjrzeć się atakom typu ROP.
 
 Ideą takiego ataku jest wykorzystanie fragmentów kodu znajdujących się już w naszej aplikacji. Nie muszą to być fragmenty, które są kodem. Tekst zawierający odpowiednie sekwencje bitów lub kod bibliotek jeżeli są linkowane statycznie jest również możliwy do wykorzystania.
 
-Atakujący za pomocą ROP szuka małych fragmentów assemblera, które kończą się instrukcja `ret`, czyli `c3`. W taki sposób fragment takiego kodu jest wykonywany mimo niewykonywalnego stosu. Kod nie jest wykonywane na stosie. Ze stosu są jedynie pobierane adresy fragmentów kodu - tzw. ROP Gadgetów. 
+Atakujący szuka małych fragmentów assemblera, które kończą się instrukcja `ret`, czyli `c3`. W taki sposób fragment takiego kodu jest wykonywany mimo niewykonywalnego stosu. Kod nie jest wykonywane na stosie. Ze stosu są jedynie pobierane adresy fragmentów kodu - tzw. ROP Gadgetów. 
 
-Z tych Gadgetów tworzy się łancuch realizujący, to co chce atakujący.
+Z tych Gadgetów tworzy się łancuch realizujący, to co chce uzyskać atakujący.
 
 Moim zadaniem jest więc załadować do rejestrów odpowiednie wartości i wywołać `execve` za pomocą łańcucha takich Gadgetów nazywanego ROP chain.
 
@@ -202,9 +201,9 @@ Za pomocą narzędzia gotowego narzędzia Ropper szukam ROP gadgetów:
 
 Za pomocą takich instrukcji chcę zbudować chain pozwalający na wywołanie syscalla `execve`. To narzędzie jak i wiele innych oferuje automatyczne składanie łańcuchów ROP z danym celem.
 
-W naszej exploitacji należy pamietać o nie używaniu bajtów `0x0A`, czyli końca linii, który kończy czytanie `gets`.
+W exploitacji należy pamietać o nie używaniu bajtów `0x0A`, czyli końca linii, który kończy czytanie `gets`.
 
-Komenda podana poniżej generuje rop chain wywołujący shella i nie zawierający zakazanych bajtów.
+Komenda podana poniżej generuję rop chain wywołujący shella i nie zawierający zakazanych bajtów.
 ```bash
 ropper -f vuln_2.o -b 000a --chain execve
 ```
@@ -282,9 +281,9 @@ Komenda ta w sprytny sposób sprawia, że otrzymany shell nie dostaje `EOF` i je
 
 ![img.png](img/img_9.png)
 
-W podanym przykładzie biblioteki zlinkowane są statycznie przez co ich adres pozostaje taki sam. W przypadku linkowania dynamicznego wraz z włączonym ASLR atak ten staje sie znacznie trudniejszy. W tym przypadku exploit nie działa z dynamicznym linkowaniem. Nie można kompilować jednoczesnie z flaga PIE i static.
+W podanym przykładzie biblioteki zlinkowane są statycznie przez co ich adres pozostaje taki sam. W przypadku linkowania dynamicznego wraz z włączonym ASLR atak ten staje sie znacznie trudniejszy. W tym przypadku exploit nie działa z dynamicznym linkowaniem. Nie można kompilować jednoczesnie z flaga PIE i static w starszych wersjach gcc.
 
 
 ### 5. Wnioski
 
-PIE i ASLR są technikami bardzo komplementarnymi i używanie ich razem daje największą ochronę przed atakami, które używają skakania pomiędzy sekcjami oraz offsetów w adresowaniu.
+PIE i ASLR są technikami bardzo komplementarnymi i używanie ich razem daje największą ochronę przed atakami, które używają skakania pomiędzy sekcjami oraz offsetów w adresowaniu. Są one bardzo użyteczne, ASLR powinno być włączone w systemie domyślnie, a PIE jest metodą, której użycie powinno być już umotywowane.

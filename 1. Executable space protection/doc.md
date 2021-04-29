@@ -266,5 +266,5 @@ Otrzymuję interaktywny shell i tym samym omijam zabezpieczenie niewykonywalnego
 
 Kontrolowanie tego czy dane miejsce w pamięci może wykonywać kod jest ważne i pozwala zapobiegać najprostszym atakom typu buffer overflow. Jednak nie jest to remedium na wszystkie ataki.
 
-Ataki typu ROP lub RET2LIBC mogą być wykonane z `nonexec` stosem. Jest to zabezpieczenie dość proste i konieczne.
+Ataki typu ROP lub RET2LIBC mogą być wykonane z `nonexec` stosem. Jest to zabezpieczenie dość proste i konieczne. Niewykonywalny stos powinien być standardem.
 

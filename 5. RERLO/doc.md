@@ -52,7 +52,7 @@ int main()
 
 Strategią tego ataku jest podmiana adresu funkcji `printf` na adres funkcji `system` w tablicy GOT.
 
-Aby tego dokonać użyje exploitu typu `format string` ,który korzysta z tagów formatujących funkcji `printf`.
+Aby tego dokonać użyję exploitu typu `format string` ,który korzysta z tagów formatujących funkcji `printf`.
 ```c
  printf(buf);
 ```
@@ -128,7 +128,7 @@ Teraz powinniśmy otrzymać pseudo shella - wynika to z konstrukcji programu, al
 
 Udało się wykonać exploit.
 
-Exploit odpalany z włączonym relro nie daje żadnego skutku - adres got znajduję się w innym miejscu. W przypadku próby nadpisania tego miejsca następuję `SIGSEGV` - chcieliśmy nadpisać sekcje read-only. Kod tego exploitu znajduję się w `exploit1.py`.
+Exploit odpalany z włączonym relro nie daje żadnego skutku - adres got znajduję się w innym miejscu. W przypadku próby nadpisania tego miejsca następuję `SIGSEGV` - wykonanie chciało nadpisać sekcje read-only. Kod tego exploitu znajduję się w `exploit1.py`.
 
 ![img_6.png](img/img_6.png)
 

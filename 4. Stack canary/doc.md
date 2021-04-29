@@ -127,7 +127,7 @@ Schemat działania:
 
 Aby otrzymać argumenty bedę używał exploitu format string. Konstrukcja `%15$x` pobierze 15 element ze stosu, liczbę mogę podmieniać.
 
-Podpinam `gdb` do procesu aplikacji i szukam adresu do zatrzymania wykonania. Wybieram adres przed sprawdzeniem kanarka. Widzę też gdzie pominien znajdować się kanarek -`[ebp-0xc]`.
+Podpinam `gdb` do procesu aplikacji i szukam adresu do zatrzymania wykonania. Wybieram adres przed sprawdzeniem kanarka. Widzę też gdzie powinien znajdować się kanarek -`[ebp-0xc]`.
 
 ![img.png](img/img.png)
 
@@ -153,7 +153,7 @@ Otrzymuje dwa adresy, które znajduję na stosie.
 
 ![img_3.png](img/img_3.png)
 
-Kanarek znajduję się na 31 pozycji, a nasz adres na 29. Od drugiego adresu muszę odjąć `0x108` i dodać offset wygenerowany przez elementy przed shellcode.
+Kanarek znajduje się na 31 pozycji, a nasz adres na 29. Od drugiego adresu muszę odjąć `0x108` i dodać offset wygenerowany przez elementy przed shellcode.
 
 Gotowy shellcode bedzie wyglądał tak:
 ```
@@ -196,4 +196,4 @@ Opis tego exploita znajduje się w następnym rodziale, jest to exploit przed, k
 
 ### 6. Wnioski
 
-Kanarek stosu jest dobrą metodą zabezpieczenia przed nadpisaniem adresu powrotu. Dobrą praktyką jest stosowanie go w funkcjach zawierających bufor.
+Kanarek stosu jest dobrą metodą zabezpieczenia przed nadpisaniem adresu powrotu. Dobrą praktyką jest stosowanie go w funkcjach zawierających bufor domyślnie, używanie kanarka w każdej funkcji nie jest zalecane bez powodu.
