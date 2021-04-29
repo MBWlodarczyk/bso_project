@@ -19,7 +19,7 @@ W przypadku pliku z PIE liczone są offsety.
 Widać
 to w sposobie adresacji binarki.
 
-Wpływ PIE na performance aplikacji jest dość duży. Biorąc za przykład architekturę 32bitową domyślnym zachowaniem kompilatora jest zarezerwowanie rejestru `ebx` jako adresu przetrzymującego adres tablicy GOT z której otrzymywane są pozostałe adresy. To generuje spadek performance'u - musimy ustalać adresy pośrednio.
+Wpływ PIE na performance aplikacji jest dość duży. Biorąc za przykład architekturę 32bitową, domyślnym zachowaniem kompilatora jest zarezerwowanie rejestru `ebx` jako adresu przetrzymującego adres tablicy GOT z której otrzymywane są pozostałe adresy. To generuje spadek performance'u - musimy ustalać adresy pośrednio.
 
 Generuje to sporo problemów. Zostaje nam odebrany jeden rejestr do używania w trakcie realizacji programu. Dodatkowo rejestr `ebx` używany jest jako rejestr, w którym znajdują się argumenty w syscall'ach. Przez to przekazywanie argumentów jest skompliowane i wymaga dodatkowych instrukcji `push pop`.
 
