@@ -1,6 +1,6 @@
 # ASLR & PIE
 
-Techniki obrony ASLR i PIE są ze sobą sciśle powiązane, dlatego ich omówienie znajduję się w jednym pliku.
+Techniki obrony ASLR i PIE są ze sobą ściśle powiązane, dlatego ich omówienie znajduję się w jednym pliku.
 
 ### 1. PIE
 
@@ -19,18 +19,18 @@ W przypadku pliku z PIE liczone są offsety.
 Widać
 to w sposobie adresacji binarki.
 
-Wpływ PIE na performance aplikacji jest dość duży. Biorąc za przykład architekturę 32bitową, domyślnym zachowaniem kompilatora jest zarezerwowanie rejestru `ebx` jako adresu przetrzymującego adres tablicy GOT z której otrzymywane są pozostałe adresy. To generuje spadek performance'u - musimy ustalać adresy pośrednio.
+Wpływ PIE na performance aplikacji jest dość duży. Biorąc za przykład architekturę 32bitową, domyślnym zachowaniem kompilatora jest zarezerwowanie rejestru `ebx` jako adresu przetrzymującego adres tablicy GOT z której otrzymywane są pozostałe adresy. To powoduje spadek performance'u - musimy ustalać adresy pośrednio.
 
-Generuje to sporo problemów. Zostaje nam odebrany jeden rejestr do używania w trakcie realizacji programu. Dodatkowo rejestr `ebx` używany jest jako rejestr, w którym znajdują się argumenty w syscall'ach. Przez to przekazywanie argumentów jest skompliowane i wymaga dodatkowych instrukcji `push pop`.
+Generuje to sporo problemów. Zostaje nam odebrany jeden rejestr do używania w trakcie realizacji programu. Dodatkowo rejestr `ebx` używany jest jako rejestr w którym znajdują się argumenty w syscallach. Przez to przekazywanie argumentów jest skompliowane i wymaga dodatkowych instrukcji `push pop`.
 
-Badania mówią o średnio 10% spadku wydajności. Maksymalnie do 25%. 
+Badania mówią o średnio 10% spadku wydajności, maksymalnie do 25%. 
 
 PIE pozwala na lepsze użycie ASLR.
 
 ### 2. ASLR
 
-ASLR (Address space layout randomization) - to technika polegająca na losowym umieszczeniu sekcji programu, aby uniemożliwić
-skakanie do danych sekcji. Jest to dość duże utrudnienie w atakach binarnych. W dużej cześci ataków oznacza to po prostu zgadywanie danej wartości do skutku.
+ASLR (Address space layout randomization) - to technika polegająca na losowym umieszczeniu sekcji programu w pamięci, aby uniemożliwić
+skakanie do danych sekcji. Jest to dość duże utrudnienie w atakach binarnych. W dużej części ataków oznacza to po prostu zgadywanie danej wartości do skutku.
 
 ASLR najlepiej stosować na kodzie skompilowanym z PIE, wtedy można załadować kod i PLT do losowych adresów, w przeciwnym razie kod i PLT jest statyczny, a losowość dotyczy jedynie bibliotek, stosu oraz sterty.
 
@@ -42,7 +42,7 @@ Ważny aspektem ASLR jest także entropia samego losowania, która powinna być 
 
 ##### Przykład:
 
-Ten sam kod uruchomiony dwa razy ma inna przestrzeń adresową.
+Ten sam kod uruchomiony dwa razy ma inną przestrzeń adresową.
 
 ![img_6.png](img/img_6.png)
 
@@ -50,12 +50,12 @@ Ten sam kod uruchomiony dwa razy ma inna przestrzeń adresową.
 
 
 
-Główna róznica pomiedzy implementacją Linuxową i Windowsową jest to, że w Linuxie jest to opcja compile-time, a w Windowsie link-time.
+Główną róźnicą pomiędzy implementacją Linuxową i Windowsową jest to, że w Linuxie jest to opcja compile-time, a w Windowsie link-time.
 
-W Linuxie ASLR jest implementowane w kernelu. Na linuxie ASLR ma wpływ na performance przez to, że binarki obsługujące ASLR muszą być kompilowane z PIE (Position Independent Executable), co prowadzi nawet do 25% gorszego performance'u na 32bit x86. 
+W Linuxie ASLR jest implementowane w kernelu. Na linuxie ASLR ma wpływ na performance przez to, że binarki obsługujące ASLR muszą być kompilowane z PIE (Position Independent Executable), co prowadzi nawet do performance'u 25% gorszego na 32bit x86. 
 
 
-Na Windowsie ASLR jest włączany poprzez linkowanie z opcja `/DYNAMICBASE`. Na windowsie wpływ na performance run-time jest raczej niewielki, ale ASLR może spowolnić ładowanie modułów.
+Na Windowsie ASLR jest włączany poprzez linkowanie z opcją `/DYNAMICBASE`. Na Windowsie wpływ na performance run-time jest raczej niewielki, ale ASLR może spowolnić ładowanie modułów.
 
 ### 3. Proof of Concept - sterowanie wykonaniem programu bez randomizacji
 
@@ -66,7 +66,7 @@ Można to zrobić np. tak `echo "0" | sudo dd of=/proc/sys/kernel/randomize_va_s
 
 Aby ASLR włączyć na nowo należy ustawić flagę na 2 - ``echo "2" | sudo dd of=/proc/sys/kernel/randomize_va_space``.
 
-Kod programu, który bedzie exploitować jest następujący:
+Kod programu, który będzie exploitowany jest następujący:
 
 - **PIE & ASLR**: wyłączony - jest to przedmiotem tego exploitu, powrót do funkcji jest możliwy jeżeli wiem, gdzie skoczyć.
 - **CANARY**: wyłączony - kanarek nie pozwoliłby nadpisać adresu powrotu, zajmę się nim w dalszej cześci.
@@ -97,7 +97,7 @@ return 0;
 }
 ```
 
-Chcę wywołać funkcję `secret` spawnującą shella. Aby to zrobić, chce nadpisać adres powrotu funkcji `ask_for_name()` na właśnie tą funkcje.
+Chcę wywołać funkcję `secret` spawnującą shella. Aby to zrobić, chcę nadpisać adres powrotu funkcji `ask_for_name()` na właśnie tę funkcję.
 
 Na początku staram się ustalić, kiedy nadpiszę `eip` przesyłając do ofiary duży string z podłączonym debuggerem.
 
@@ -147,7 +147,7 @@ W momencie ustawienia jej na 2 exploit nie działa - adres, który nadpisuję ni
 
 ![img_3.png](img/img_3.png)
 
-Adres, który wywołuje `eip` jest losowym adresem, więc wykonanie konczy się `SIGSEGV`, bo program chciał odnieść się do zabronionej dla niego pamięci.
+Adres, który wywołuje `eip` jest losowym adresem, więc wykonanie kończy się `SIGSEGV`, bo program chciał odnieść się do zabronionej dla niego pamięci.
 
 Warto dodać, że w przypadku wykonania exploitu na programie kompilowanym z PIE, ale z wyłączonym ASLR - exploit działa. Samo PIE bez ASLR nie chroni przed takim atakiem.
 
@@ -155,13 +155,13 @@ Warto dodać, że w przypadku wykonania exploitu na programie kompilowanym z PIE
 
 W tym momencie warto byłoby przyjrzeć się atakom typu ROP. 
 
-Ideą takiego ataku jest wykorzystanie fragmentów kodu znajdujących się już w naszej aplikacji. Nie muszą to być fragmenty, które są kodem. Tekst zawierający odpowiednie sekwencje bitów lub kod bibliotek jeżeli są linkowane statycznie jest również możliwy do wykorzystania.
+Ideą takiego ataku jest wykorzystanie fragmentów kodu znajdujących się już w naszej aplikacji. Nie muszą to być fragmenty, które są kodem. Tekst zawierający odpowiednie sekwencje bitów lub kod bibliotek, jeżeli są linkowane statycznie, jest również możliwy do wykorzystania.
 
-Atakujący szuka małych fragmentów assemblera, które kończą się instrukcja `ret`, czyli `c3`. W taki sposób fragment takiego kodu jest wykonywany mimo niewykonywalnego stosu. Kod nie jest wykonywane na stosie. Ze stosu są jedynie pobierane adresy fragmentów kodu - tzw. ROP Gadgetów. 
+Atakujący szuka małych fragmentów assemblera, które kończą się instrukcja `ret`, czyli `c3`. W taki sposób fragment takiego kodu jest wykonywany mimo niewykonywalnego stosu. Kod nie jest wykonywany na stosie. Ze stosu są jedynie pobierane adresy fragmentów kodu - tzw. ROP Gadgetów. 
 
-Z tych Gadgetów tworzy się łancuch realizujący, to co chce uzyskać atakujący.
+Z tych Gadgetów tworzy się łańcuch realizujący, to co chce uzyskać atakujący.
 
-Moim zadaniem jest więc załadować do rejestrów odpowiednie wartości i wywołać `execve` za pomocą łańcucha takich Gadgetów nazywanego ROP chain.
+Moim zadaniem jest więc, załadować do rejestrów odpowiednie wartości i wywołać `execve` za pomocą łańcucha takich Gadgetów nazywanego ROP chain.
 
 Kod exploitowanej aplikacji:
 
@@ -193,22 +193,22 @@ int main()
 }
 ```
 
-Aplikacja jest zlinkowana statyczne w celu uzyskania jak największej ilości gadgetów. W przypadku dużych aplikacji odpowiednie gadgety mogły znajdować się w kodzie aplikacji.
+Aplikacja jest zlinkowana statycznie w celu uzyskania jak największej ilości gadgetów. W przypadku dużych aplikacji odpowiednie gadgety mogłyby znajdować się w kodzie aplikacji.
 
-Za pomocą narzędzia gotowego narzędzia Ropper szukam ROP gadgetów:
+Za pomocą gotowego narzędzia Ropper szukam ROP gadgetów:
 
 ![img.png](img/img_8.png)
 
-Za pomocą takich instrukcji chcę zbudować chain pozwalający na wywołanie syscalla `execve`. To narzędzie jak i wiele innych oferuje automatyczne składanie łańcuchów ROP z danym celem.
+Za pomocą takich instrukcji chcę zbudować łańcuch pozwalający na wywołanie syscalla `execve`. To narzędzie jak i wiele innych oferuje automatyczne składanie łańcuchów ROP z danym celem.
 
-W exploitacji należy pamietać o nie używaniu bajtów `0x0A`, czyli końca linii, który kończy czytanie `gets`.
+W exploitacji muszę pamiętać o nie używaniu bajtów `0x0A`, czyli końca linii, który kończy czytanie `gets`.
 
-Komenda podana poniżej generuję rop chain wywołujący shella i nie zawierający zakazanych bajtów.
+Komenda podana poniżej, generuję rop chain wywołujący shella i nie zawierający zakazanych bajtów.
 ```bash
 ropper -f vuln_2.o -b 000a --chain execve
 ```
 
-Po otrzymaniu chaina należy jedynie dopisać resztę exploita, czyli dokleić odpowiednią liczbę dowolnego znaku, aby trafić w rejestr `eip`. W tym przypadku jest to 28.
+Po otrzymaniu chaina należy jedynie dopisać resztę exploita, czyli dokleić odpowiednią liczbę  `a`, aby trafić w rejestr `eip`. W tym przypadku jest to 28.
 
 ```python
 
@@ -271,7 +271,7 @@ print rop
 
 Kod wygenerowany przez Ropper realizuje wywołanie funkcji `execve` z `bin/sh`.
 
-Narzędzie generuję kod obsługiwany przez python2, więc w tym przypadku aby exploit wykonać używam komendy:
+Narzędzie generuje kod obsługiwany przez python2, więc w tym przypadku aby exploit wykonać używam komendy:
 
 ```bash
 (python2 exploit_2.py && cat) | ./vuln_2.o
@@ -281,9 +281,9 @@ Komenda ta w sprytny sposób sprawia, że otrzymany shell nie dostaje `EOF` i je
 
 ![img.png](img/img_9.png)
 
-W podanym przykładzie biblioteki zlinkowane są statycznie przez co ich adres pozostaje taki sam. W przypadku linkowania dynamicznego wraz z włączonym ASLR atak ten staje sie znacznie trudniejszy. W tym przypadku exploit nie działa z dynamicznym linkowaniem. Nie można kompilować jednoczesnie z flaga PIE i static w starszych wersjach gcc.
+W podanym przykładzie biblioteki zlinkowane są statycznie, przez co ich adres pozostaje taki sam. W przypadku linkowania dynamicznego wraz z włączonym ASLR atak ten staje sie znacznie trudniejszy. W tym przypadku exploit nie działa z dynamicznym linkowaniem. Nie można kompilować jednoczesnie z flagą PIE i static w starszych wersjach gcc.
 
 
 ### 5. Wnioski
 
-PIE i ASLR są technikami bardzo komplementarnymi i używanie ich razem daje największą ochronę przed atakami, które używają skakania pomiędzy sekcjami oraz offsetów w adresowaniu. Są one bardzo użyteczne, ASLR powinno być włączone w systemie domyślnie, a PIE jest metodą, której użycie powinno być już umotywowane.
+PIE i ASLR są technikami komplementarnymi i używanie ich razem daje największą ochronę przed atakami, które używają skakania pomiędzy sekcjami oraz offsetów w adresowaniu. Są one bardzo użyteczne, ASLR powinno być włączone w systemie domyślnie, a PIE jest metodą, której użycie powinno być już umotywowane.
