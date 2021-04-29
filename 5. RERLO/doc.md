@@ -2,15 +2,15 @@
 
 ### 1. Opis
 
-RELRO to technika polegająca na oznaczaniu sekcji związanych z GOT i PLT jako tylko do odczytu, co nie pozwala nadpisać tych sekcji.
+RELRO to technika polegająca na oznaczaniu sekcji związanych z GOT i PLT jako sekcji tylko do odczytu, co nie pozwala nadpisać tych sekcji.
 
-Tablica GOT jest zapełniana podczas przebiegu programu. Kiedy po raz pierwszy funkcja z biblioteki współdzielnej zostanie wywołana GOT zawiera pointer powrotny do PLT, gdzie dynamiczny linker dostaje wywołany. Linker po odnalezieniu funkcji zapisuje ją w GOT. To jest `lazy binding` - raz znaleziona funkcja jest trzymana w pamięci w tablicy GOT, co pozwala zaoszczędzić czas.
+Tablica GOT jest zapełniana podczas przebiegu programu. Kiedy po raz pierwszy funkcja z biblioteki współdzielonej zostanie wywołana GOT zawiera pointer powrotny do PLT, gdzie dynamiczny linker zostaje wywołany. Linker po odnalezieniu funkcji zapisuje ją w GOT. To jest `lazy binding` - raz znaleziona funkcja jest trzymana w pamięci w tablicy GOT, co pozwala zaoszczędzić czas.
 
 Istnieją dwa rodzaje RELRO:
 * partial RELRO - jedynie sekcja `.got` jest `read only` - co pozwala na nadpisanie adresu w `.got.plt` i wykonanie złośliwego kodu - przykład niżej.
 * full RELRO - cały GOT jest `read only`, co uniemożliwia ataki z nadpisaniem adresu w GOT.
 
-Partial RELRO jest defaultowym zachowaniem `gcc` i nie wpływa na performance. Full RELRO jest jednak rozwiązaniem dość inwazyjnym. W przypadku ustawienia GOT jako `read only` w tablicy tej muszą już znajdować się wszystkie symbole, które są używane przez program. 
+Partial RELRO jest domyślnym zachowaniem `gcc` i nie wpływa na performance. Full RELRO jest jednak rozwiązaniem dość inwazyjnym. W przypadku ustawienia GOT jako `read only` w tablicy tej muszą już znajdować się wszystkie symbole, które są używane przez program. 
 
 Znacząco wpływa to na czas startu aplikacji, bo linker musi na samym jej starcie uzupełnić cała tablice GOT.
 
@@ -20,7 +20,7 @@ W gcc kompiluje się z full RERLO flaga `-z,relro,now`.
 
 
 Kompilacja:
-- **PIE & ASLR**: wyłączone dla stałości adresów
+- **PIE & ASLR**: wyłączone dla stałości adresów.
 - **RERLO**: wyłączone - idea exploitu.
 
 Kod podatnej aplikacji:
@@ -52,7 +52,7 @@ int main()
 
 Strategią tego ataku jest podmiana adresu funkcji `printf` na adres funkcji `system` w tablicy GOT.
 
-Aby tego dokonać użyję exploitu typu `format string` ,który korzysta z tagów formatujących funkcji `printf`.
+Aby tego dokonać użyję exploitu typu `format string`, który korzysta z tagów formatujących funkcji `printf`.
 ```c
  printf(buf);
 ```
@@ -63,7 +63,7 @@ W przypadku podania tagów `%x` pobierana jest wartość ze stosu.
 
 ![img.png](img/img.png)
 
-Chcę ustalić jak daleko na stosie jest `buf` Metodą prób i błędów znajduję początek bufora. Aby pobrać inny argument niż najwyższy używam konstrukcji %3$x.
+Chcę ustalić jak daleko na stosie jest `buf` Metodą prób i błędów znajduję początek bufora. Aby pobrać inny argument niż najwyższy używam konstrukcji `%3$x`.
 
 ![img_1.png](img/img_1.png)
 
@@ -101,7 +101,7 @@ p.sendline(name)
 p.interactive()
 ```
 
-Adres wysyłam na dwa razy - wypisanie adresu jako liczby w postaci spacji nie jest zbyt dobrym pomysłem.
+Adres wysyłam na dwa razy - wypisanie adresu jako liczby w postaci spacji nie jest zbyt dobrym pomysłem - liczba jest ogromna.
 
 Używam paddingu, aby pozycje na stosie były niezmienne. Według moich obliczeń adresy wpisane przez mnie znajdują się na 15 i 16 pozycji stosu.
 
@@ -111,7 +111,7 @@ Jest to prawda.
 
 Pod adres `0x0804c010` chce zapisać `0f10` czyli `3856` bajty. Osiągam to whitespace'ami generowanym przez tag x.
 
-Pod adres `0x0804c012` chce zapisać wyższą cześć adresu systemu czyli `f7e1` co daje `63457` bajty, ale poprzednie bajty już są na ekranie, więc `63457 - 3856 = 59601` bajtów.
+Pod adres `0x0804c012` chce zapisać wyższą część adresu systemu czyli `f7e1` co daje `63457` bajty, ale poprzednie bajty już są na ekranie, więc `63457 - 3856 = 59601` bajtów.
 
 Sklejam gotowy exploit.
 
@@ -128,7 +128,7 @@ Teraz powinniśmy otrzymać pseudo shella - wynika to z konstrukcji programu, al
 
 Udało się wykonać exploit.
 
-Exploit odpalany z włączonym relro nie daje żadnego skutku - adres got znajduję się w innym miejscu. W przypadku próby nadpisania tego miejsca następuję `SIGSEGV` - wykonanie chciało nadpisać sekcje read-only. Kod tego exploitu znajduję się w `exploit1.py`.
+Exploit włączony na kodzie z włączonym relro nie daje żadnego skutku - adres got znajduje się w innym miejscu. W przypadku próby nadpisania tego miejsca następuje `SIGSEGV` - wykonanie chciało nadpisać sekcje read-only. Kod tego exploitu znajduję się w `exploit1.py`.
 
 ![img_6.png](img/img_6.png)
 
