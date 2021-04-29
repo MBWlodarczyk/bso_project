@@ -84,8 +84,8 @@ Używając pythona i pakietu pwntools postaram się wykorzystać ten błąd.
 
 Schemat exploitacji jest następujący:
 
-* ustalić ilośc danych, które musimy podać, aby nadpisać adres powrotu
-* ustalić miejsce w pamięci, w którym znajduje się bufor
+* ustalić ilość danych, które musimy podać, aby nadpisać adres powrotu,
+* ustalić miejsce w pamięci, w którym znajduje się bufor,
 * nadpisać adres powrotu adresem bufora, w którym znajduje się nasz kod.
 
 ```python
