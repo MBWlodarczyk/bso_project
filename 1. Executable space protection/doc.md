@@ -8,7 +8,7 @@ Problem rozwiązywany jest zarówno sprzętowo, jak i w oprogramowaniu.
 
 Ważna jest polityka (W^X) - mówiąca, że dana strona pamięci może być tylko i wyłącznie albo wykonywalna, albo można do niej pisać. Polityka ta została wprowadzona w OpenBSD 3.3 w 2003 roku. Polityka jest dość dobrą obroną przed atakami buffer overflow.
 
-Odpowiedzią Microsoftu było DEP (Data Execution Preventon) wprowadzone w Windows XP zawierające szereg zabezpieczeń - między innymi obsługę `NX-bit` oraz później - ASLR.
+Odpowiedzią Microsoftu było DEP (Data Execution Prevention) wprowadzone w Windows XP zawierające szereg zabezpieczeń - między innymi obsługę `NX-bit` oraz później - ASLR.
 
 Obecnie sprzętowym sposobem realizacji jest tak zwany `NX-bit` odpowiadający właśnie za wykonywalność pamięci. Z tego właśnie korzysta jądro Linuxa, jeżeli procesor obsługuje tę funkcję.
 
