@@ -57,6 +57,9 @@ W Linuxie ASLR jest implementowane w kernelu. Na linuxie ASLR ma wpływ na perfo
 
 Na Windowsie ASLR jest włączany poprzez linkowanie z opcją `/DYNAMICBASE`. Na Windowsie wpływ na performance run-time jest raczej niewielki, ale ASLR może spowolnić ładowanie modułów.
 
+Windows na przestrzeni lat borykał się z dużą ilością problemów ze swoją implementacją ASLR. ASLR pojawiło się wraz z Windows Vista. Przed Vistą binarki na Windowsie ładowały się na stałę adresy zapisane na stałe w kodzie. ASLR na Windowsie ma dużo problemów. Binarki często ładują się na te same adresy w przypadku zamknięcia programu i uruchomienia go ponownie w krótkim czasie.
+Nowe instancje tej samej binarki również mają ten sam adres, stwarza to duże problemy z bezpieczeństwem. Binarki też często mają te same offsety. Pełną ochronę na Windowsie i gwarancje losowego adresy daje jedynie reboot.
+
 ### 3. Proof of Concept - sterowanie wykonaniem programu bez randomizacji
 
 
