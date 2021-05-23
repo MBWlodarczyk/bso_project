@@ -23,7 +23,7 @@ Wpływ PIE na performance aplikacji jest dość duży. Biorąc za przykład arch
 
 Generuje to sporo problemów. Zostaje nam odebrany jeden rejestr do używania w trakcie realizacji programu. Dodatkowo rejestr `ebx` używany jest jako rejestr w którym znajdują się argumenty w syscallach. Przez to przekazywanie argumentów jest skompliowane i wymaga dodatkowych instrukcji `push pop`.
 
-Badania mówią o średnio 10% spadku wydajności, maksymalnie do 25%. 
+Badania mówią o średnio 10% spadku wydajności, maksymalnie do 25% na 32 bitach. W przypadku 64 bitów spadek jest mały z uwagi na możliwość relatywnego adresowania.
 
 PIE pozwala na lepsze użycie ASLR.
 

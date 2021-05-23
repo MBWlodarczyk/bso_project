@@ -30,7 +30,11 @@ Do rejestru `eax` ładowany jest aktualny kanarek funkcji. Następnie odejmowany
 
 Wtedy ustawiana jest flaga zero i instrukcja `je` omija `call` do funkcji mówiącej o błędzie kanarka i wywołanie kończy się normalnie. W przeciwnym przypadku wywoływana jest funkcja, która obsługuje błąd.
 
-### 3. Proof of concept - prosta zmiana wykonania
+### 3. Wydajność
+
+Kanarek ma znikomy wpływ na performance aplikacji - jest to dodatkowe 2-3 instrukcje, które w skali dużej aplikacji nie wpływają na szybkość wykonania. Nie wszystkie funkcje muszą być objęte kanarkiem, co dodatkowo pozytywnie wpływa na wydajność.
+
+### 4. Proof of concept - prosta zmiana wykonania
 
 Kanarek jest dobra metodą obrony przed atakami typu `ASLR & PIE/exploit_1`. Ataki bazujące na nadpisaniu adresu powrotu są dobrze łatane przez kanarka stosu. Jest to lepsza metoda niż ASLR, bo w 100% skuteczna.
 
@@ -96,7 +100,7 @@ A w przypadku kompilacji z kanarkiem nie udaje się - widać tutaj błąd, któr
 ![img_1.png](img/img_6.png)
 
 
-### 4. Proof of concept - leak kanarka i wykonywalny stos
+### 5. Proof of concept - leak kanarka i wykonywalny stos
 
 Istotą tego exploitu będzie pozyskanie wartości kanarka za pomocą format string.
 
@@ -190,10 +194,10 @@ Został wywołany shell - exploit działa.
 
 ![img_4.png](img/img_4.png)
 
-### 5. Proof of concept - GOT overwrite z format string
+### 6. Proof of concept - GOT overwrite z format string
 
 Opis tego exploita znajduje się w następnym rodziale, jest to exploit przed którym kanarek nie jest w stanie ochronić. Kanarek w żaden sposób nie chroni przed atakami typu format string oraz atakami typu GOT.
 
-### 6. Wnioski
+### 7. Wnioski
 
 Kanarek stosu jest dobrą metodą zabezpieczenia przed nadpisaniem adresu powrotu. Dobrą praktyką jest stosowanie go w funkcjach zawierających bufor domyślnie, używanie kanarka w każdej funkcji nie jest zalecane bez powodu.

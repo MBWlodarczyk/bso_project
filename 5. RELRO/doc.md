@@ -10,11 +10,14 @@ Istnieją dwa rodzaje RELRO:
 * partial RELRO - jedynie sekcja `.got` jest `read only` - co pozwala na nadpisanie adresu w `.got.plt` i wykonanie złośliwego kodu - przykład niżej.
 * full RELRO - cały GOT jest `read only`, co uniemożliwia ataki z nadpisaniem adresu w GOT.
 
-Partial RELRO jest domyślnym zachowaniem `gcc` i nie wpływa na performance. Full RELRO jest jednak rozwiązaniem dość inwazyjnym. W przypadku ustawienia GOT jako `read only` w tablicy tej muszą już znajdować się wszystkie symbole, które są używane przez program. 
-
-Znacząco wpływa to na czas startu aplikacji, bo linker musi na samym jej starcie uzupełnić całą tablicę GOT.
-
 W gcc kompiluje się z full RERLO flagą `-z,relro,now`.
+
+
+### 3. Wydajność
+
+Partial RELRO jest domyślnym zachowaniem `gcc` i nie wpływa na performance. Full RELRO jest jednak rozwiązaniem dość inwazyjnym. W przypadku ustawienia GOT jako `read only` w tablicy tej muszą już znajdować się wszystkie symbole, które są używane przez program.
+
+Znacząco wpływa to na czas startu aplikacji, bo linker musi na samym jej starcie uzupełnić całą tablicę GOT. Jednak sam `run-time performance` jest taki jak aplikacji bez full GOT, ale z wczytanymi symbolami.
 
 ### 2. Proof of Concept - got overwrite with format string
 

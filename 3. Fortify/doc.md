@@ -42,7 +42,7 @@ Opcja `fortify source` sprawia też, że ataki typu `format string` gdzie nastę
 
 `Fortify source` może wpłynąć na wielkość kodu, który kompilujemy, ale jest to na pewno dość mały wpływ.
 
-Opcja ta nie ma wpływu na performance, a nawet może go poprawiać.
+Opcja ta nie wykazuje widocznego wpływu na performance aplikacji, w niektórych przypadkach nawet szybkość wykonania zwiększyła się. Jest to dość dobra wydajnościowo opcja.
 
 ### 3. Proof of concept
 
