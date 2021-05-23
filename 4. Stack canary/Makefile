@@ -1,6 +1,9 @@
+CC = gcc
+CFLAGS = -std=c99 -m32 -w
+
 hellomake:
-	gcc vuln.c -std=c99 -no-pie -m32 -fno-stack-protector -z execstack -w -o vuln.o
-	gcc vuln.c -std=c99 -no-pie -m32 -fno-stack-protector -w -o vuln_p.o
-	gcc vuln_2.c -m32 -z execstack -fstack-protector-all -o vuln_2.o
+	${CC} vuln.c ${CFLAGS} -no-pie  -fno-stack-protector -z execstack  -o vuln.o
+	gcc vuln.c ${CFLAGS} -no-pie -fno-stack-protector  -o vuln_p.o
+	gcc vuln_2.c ${CFLAGS} -z execstack -fstack-protector-all -o vuln_2.o
 clean:
 	rm -f vuln.o vuln_p.o vuln_2.o vuln_2_p.o
