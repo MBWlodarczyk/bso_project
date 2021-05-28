@@ -134,3 +134,101 @@ Exploit działa.
 
 ![img_2.png](img_2.png)
 
+#### 2.2
+
+Przechodząc do trudniejszego zadania tego samego typu zajmę się - heap two z tej samej strony - to prosty exploit typu use-after-free.
+
+```c
+#include <err.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#define BANNER \
+  "Welcome to " LEVELNAME ", brought to you by https://exploit.education"
+
+struct auth {
+char name[32];
+int auth;
+};
+
+struct auth *auth;
+char *service;
+
+int main(int argc, char **argv) {
+char line[128];
+
+printf("%s\n", BANNER);
+
+while (1) {
+printf("[ auth = %p, service = %p ]\n", auth, service);
+
+if (fgets(line, sizeof(line), stdin) == NULL) break;
+
+if (strncmp(line, "auth ", 5) == 0) {
+auth = malloc(sizeof(struct auth));
+memset(auth, 0, sizeof(struct auth));
+if (strlen(line + 5) < 31) {
+strcpy(auth->name, line + 5);
+}
+}
+if (strncmp(line, "reset", 5) == 0) {
+free(auth);
+}
+if (strncmp(line, "service", 6) == 0) {
+service = strdup(line + 7);
+}
+if (strncmp(line, "login", 5) == 0) {
+if (auth && auth->auth) {
+printf("you have logged in already!\n");
+} else {
+printf("please enter your password\n");
+}
+}
+}
+}
+}
+```
+
+Patrząc na kod widzę, że muszę ustawić zmienna auth z struktury na wartości inną niż 0. Nie występuje tu buffer overflow - wszystkie długości stringów też są sprawdzane. 
+
+Pozornie kod jest poprawny, ale błąd, który będziemy exploitować leży w tej opcji
+
+```c
+if (strncmp(line, "reset", 5) == 0) {
+free(auth);
+}
+```
+Po zwolnieniu auth, pointer auth nadal wskazuje na tą sama lokalizacje w pamięci. Opcja login nadal sprawdzi to samo miejsce w pamięci, pomimo zwolnienia go (use-after-free). 
+
+W tym miejscu warto by użyć funkcji `service`, która używa `strdup`, który pod spodem wywołuje dobrze znaną funkcję `malloc`. To jest nasz sposób na zapis zmiennej. Po zwolnieniu `auth` chunk ten trafi na free list, z którego będzie pobrany jako następny alokowany chunk.
+
+Planem exploitacji jest:
+ * utworzyć `auth`
+ * zwolnić `auth`
+ * utworzyć `service` o dużej długości - rozmiar bloków musi być podobny, aby trafiły w to samo miejsce.
+
+Tworzę auth.
+
+![img_3.png](img_3.png)
+
+![img_4.png](img_4.png)
+
+Zwalniam auth.
+
+![img_5.png](img_5.png)
+
+Widzę, że dane pozostają w pamięci, zmienia się header.
+
+Wprowadzam service o długości 33 bajty.
+
+![img_6.png](img_6.png)
+
+Widzę, że chunk został alokowany pod tym samym adresem, a pointer auth nadal wskazuje na ten adres. 
+
+Przy próbie zalogowania widzimy sukces.
+
+![img_7.png](img_7.png)
+
+2.3
