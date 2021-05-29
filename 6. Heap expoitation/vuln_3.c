@@ -53,9 +53,7 @@ void complete_level() {
 }
 
 void main_loop() {
-	admin[0] = 'a';
-
-    int flag = 1;
+    boolean flag = 1;
     while(flag) {
 
 
