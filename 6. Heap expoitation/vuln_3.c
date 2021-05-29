@@ -6,10 +6,10 @@
 
 
 char important_data[0x10] = "\x30\0\0\0\0\0\0\0";
-char admin[0x10] = "???\0";
+char admin[0x10] = "useruser\0";
 
 
-char *users[15];
+char *users[32];
 int userCount = 0;
 
 void create_user() {
@@ -46,17 +46,21 @@ void delete_user() {
 }
 
 void complete_level() {
-    if(strcmp(admin, "admin\n")) {
+    if(!strcmp(admin, "admin\n")) {
         puts("Level Complete!");
         return;
     }
 }
 
 void main_loop() {
-    boolean flag = true;
-    while(flag) {
-        printf(">> ");
+	admin[0] = 'a';
 
+    int flag = 1;
+    while(flag) {
+
+
+        printf(">> ");
+	fflush(stdout);
         char input[2];
         read(0, input, sizeof(input));
         int choice = atoi(input);
@@ -71,8 +75,9 @@ void main_loop() {
                 break;
             case 3:
                 complete_level();
+		break;
             case 4:
-                flag = false;
+                flag = 0;
             default:
                 break;
         }
