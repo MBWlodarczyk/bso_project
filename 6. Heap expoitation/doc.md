@@ -231,7 +231,7 @@ Przy próbie zalogowania widzimy sukces.
 
 ![img_7.png](img_7.png)
 
-#### 2.3 - double-free
+#### 2.3 double-free
 
 Następnym omówiony exploitem, będzie double-free. Strategia ta polega na podwójnym uwolnieniu jednego chunka pamięci. W tym przypadku chunk do którego możemy pisać jest uwalniany.
 Kiedy jest on uwolniony pozwala nadpisać pointer do następnego free chunka, tym samym dając arbitrary write.
@@ -418,11 +418,34 @@ W tym momencie zmienna zostaje nadpisana i kończy się exploit.
 
 ![img_8.png](img_8.png)
 
-Największy problemem tego ataku jest to, że adres pod który piszemy musi mieć metadane, które zostaną uznane za chunk - stąd też
+Największy problemem tego ataku jest to, że adres pod który piszemy musi mieć metadane, które zostaną uznane za chunk - stąd też:
 
 ```c
 char important_data[0x10] = "\x30\\0\0\0\0\0\0\0";
 ```
+
+#### 3. Wnioski
+
+Sterta jest dość skompilowanym tworem i podlega ciągłym zmianom. Dziury w implementacji znajdowane są po dziś dzień i na bieżąco łatane.
+
+Największym problemem sterty są programiści nie wiedzący jak korzystać z pamięci i nie będący świadomi zagrożeń związanych z złą praktyką programistyczną.
+
+Aby zapobiec exploitacji sterty należy:
+
+* używać tyle pamięci ile zalokowaliśmy
+* zwalniać pamięć tylko raz i po każdym użyciu
+* nigdy nie odwoływać się do uwolnionej pamięci
+* zawsze sprawdzać wartość zwracaną przez malloc.
+
+#### 4. Inne ataki przed, którymi nie ma obrony
+
+Atak przed którym nie ma należytej obrony jest po prostu podmiana biblioteki na hoście. W przypadku skompilowania własnej wersji biblioteki standardowej można podmienić zmienna LD_PRELOAD. W tym przypadku programista myślący, że używa `printf()` wykonuje złośliwy kod spreparowany przez atakującego. 
+Nasz kod może dodatkowo imitować funkcję, żeby atak nie był wykrywalny. Moją propozycją obrony jest sprawdzanie sumy kontrolnej biblioteki.
+
+Atak sprzętowe to też ataki, którym nie jest poświęcana odpowiednia uwaga. Wszelakie ataki ingerujące w sprzęt takie jak analiza czasowa, czy analiza pola elektromagnetycznego nie są znane szerszemu gronu i obrona przed nimi nie jest prosta.
+
+Ataki na stertę w dużej mierze pozostają niezałatane, ale wymagają obecnej dziury programistycznej. Biblioteka standardowa stara się wykonywać checki, które temu zapobiegają. Obroną jest po prostu dobra praktyka programistyczna.
+
 
 
 
