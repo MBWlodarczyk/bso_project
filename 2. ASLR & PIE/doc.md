@@ -27,6 +27,8 @@ Badania mówią o średnio 10% spadku wydajności, maksymalnie do 25% na 32 bita
 
 PIE pozwala na lepsze użycie ASLR.
 
+Tak samo zachowuje się `clang` i `gcc` i używa flagi `-pie`.
+
 ### 2. ASLR
 
 ASLR (Address space layout randomization) - to technika polegająca na losowym umieszczeniu sekcji programu w pamięci, aby uniemożliwić

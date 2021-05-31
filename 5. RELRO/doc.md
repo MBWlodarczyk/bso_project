@@ -10,7 +10,7 @@ Istnieją dwa rodzaje RELRO:
 * partial RELRO - jedynie sekcja `.got` jest `read only` - co pozwala na nadpisanie adresu w `.got.plt` i wykonanie złośliwego kodu - przykład niżej.
 * full RELRO - cały GOT jest `read only`, co uniemożliwia ataki z nadpisaniem adresu w GOT.
 
-W gcc kompiluje się z full RERLO flagą `-z,relro,now`.
+W gcc kompiluje się z full RERLO flagą `-z,relro,now`. Tak samo zachowuje się `clang` i `gcc`.
 
 
 ### 3. Wydajność

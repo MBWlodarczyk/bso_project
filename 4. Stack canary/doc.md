@@ -14,7 +14,7 @@ Istnieją też tak zwane `XOR canaries`, czyli kanarki, których wartość to XO
 
 Jest to domyślna opcja kompilatora `gcc`, można ją wyłączyć flagą `-fno-stack-protector`. Ochronę funkcji z buforami większymi niż 8 bajtów i używającymi `alloca` włącza `-fstack-protector`. A ochronę wszystkich funkcji włącza `-fstack-protector-all`.
 
-Podobnie zachowuje się `clang`.
+Podobnie zachowuje się `clang` i wywołuje te same flagi.
 
 Kanarek sprawdza się przeciwko atakom, które nadpisują adres powrotu - ataki typu `ret2libc`, `ropchain` są bezużyteczne bez znajomości kanarka. 
 

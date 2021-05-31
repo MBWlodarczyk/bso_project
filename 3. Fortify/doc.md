@@ -4,7 +4,7 @@
 
 Technika `fortify source` polega na wykrywaniu przepełnienia bufora w `libc`. 
 
-`Fortify source` jest wywoływane flagą `-D_FORTIFY_SOURCE={1,2}` gdzie `1,2` oznacza poziom zabezpieczeń.
+`Fortify source` jest wywoływane flagą `-D_FORTIFY_SOURCE={1,2}` gdzie `1,2` oznacza poziom zabezpieczeń. Tak samo zachowuje się `clang` i `gcc`.
 
 Flaga ta działa tylko jeżeli obecna jest też flaga `-O1` lub wyższa.
 
